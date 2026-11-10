@@ -1,0 +1,3257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ProductionCore - Panel HMI-T7 Konsol Operator</title>
+  <style>
+    :root {
+      --brand-primary: #D6336C;
+      --brand-dark: #A61E4D;
+      --brand-light: #FFF0F6;
+      --brand-subtle: rgba(214, 51, 108, 0.12);
+      
+      --bg-canvas: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #273549;
+      --bg-input: #131c2e;
+      --border-subtle: #334155;
+      --border-focus: #D6336C;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --status-success: #2f9e44;
+      --status-error: #e03131;
+      --status-warn: #f59f00;
+      --status-info: #1971c2;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-full: 9999px;
+      
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.5;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    input, button, select, textarea {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Auth Strip / Top Status Header */
+    #hmi-status-strip {
+      background: #090e17;
+      border-bottom: 1px solid var(--border-subtle);
+      height: 40px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .strip-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+    }
+    .strip-tag {
+      background: var(--brand-subtle);
+      color: #ff85b3;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .strip-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-success);
+    }
+    .status-dot.offline { background: var(--status-error); }
+    .status-dot.warn { background: var(--status-warn); }
+
+    /* Main Container */
+    #hmi-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Login Screen Layout */
+    .auth-view {
+      flex: 1;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .hmi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title .emblem {
+      background: var(--brand-primary);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+    }
+    .form-label span.req { color: var(--brand-primary); }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .hmi-input {
+      width: 100%;
+      height: 52px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0 16px;
+      color: var(--text-primary);
+      font-size: 18px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .hmi-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--brand-subtle);
+    }
+    .hmi-input::placeholder {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Operator Pick Pills */
+    .operator-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .opr-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+    }
+    .opr-pill:hover, .opr-pill.active {
+      border-color: var(--brand-primary);
+      color: #ff85b3;
+      background: var(--brand-subtle);
+    }
+
+    /* Buttons */
+    .btn {
+      height: 54px;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      transition: background 0.15s, transform 0.05s;
+      min-height: 48px;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-primary {
+      background: var(--brand-primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--brand-dark);
+    }
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      background: #33435c;
+    }
+    .btn-danger {
+      background: var(--status-error);
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #c92a2a;
+    }
+
+    .forgot-link {
+      color: #ff85b3;
+      font-size: 14px;
+      font-weight: 600;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      align-self: flex-start;
+      margin-bottom: 18px;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* Numpad Layout */
+    .numpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      flex: 1;
+    }
+    .numpad-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 24px;
+      font-weight: 700;
+      min-height: 58px;
+      height: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      transition: background 0.1s, transform 0.05s;
+    }
+    .numpad-btn:active {
+      background: var(--border-subtle);
+      transform: scale(0.96);
+    }
+    .numpad-btn.btn-clr {
+      background: #451a24;
+      color: #ff8787;
+      border-color: #742a2a;
+      font-size: 18px;
+    }
+    .numpad-btn.btn-ok {
+      background: #0f4024;
+      color: #8ce99a;
+      border-color: #1e5e3a;
+      font-size: 20px;
+    }
+
+    /* Alert Banner */
+    .alert-banner {
+      background: rgba(224, 49, 49, 0.15);
+      border: 1px solid var(--status-error);
+      color: #ffa8a8;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* App Shell */
+    #hmi-app-shell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HMI Topbar */
+    #hmi-topbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      height: 64px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-card);
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+      font-size: 13px;
+    }
+    .topbar-center .badge-status {
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .badge-run { background: #134e29; color: #8ce99a; }
+    .badge-stop { background: #451a24; color: #ff8787; }
+    .badge-fault { background: #610b0b; color: #ff6b6b; }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-mute {
+      background: #7a1e1e;
+      color: #ffc9c9;
+      border: 1px solid #c92a2a;
+      height: 42px;
+      padding: 0 16px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Main Tab Content Area */
+    .tab-content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Bottom Navigation */
+    #hmi-bottom-nav {
+      background: #090e17;
+      border-top: 1px solid var(--border-subtle);
+      height: 68px;
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+    }
+    .nav-tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 56px;
+      position: relative;
+    }
+    .nav-tab-btn .tab-icon {
+      font-size: 20px;
+    }
+    .nav-tab-btn.active {
+      color: #ff85b3;
+      background: var(--brand-subtle);
+    }
+    .nav-tab-btn.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--brand-primary);
+    }
+
+    /* Profile Tab Styling */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+    }
+    .profile-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+    .profile-table th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      width: 35%;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .profile-table td {
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .modal-actions .btn {
+      flex: 1;
+    }
+
+    /* Additional HMI Touch Ergonomic & Component Styling */
+    .badge-count {
+      background: var(--status-error);
+      color: white;
+      border-radius: var(--radius-full);
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .nav-badge {
+      position: absolute;
+      top: 6px;
+      right: 28%;
+    }
+    .btn-quick-add {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(214, 51, 108, 0.4);
+      transition: transform 0.08s, background 0.15s;
+    }
+    .btn-quick-add:active {
+      transform: scale(0.92);
+      background: var(--brand-dark);
+    }
+    .btn-icon {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-icon:hover {
+      color: #ff85b3;
+      border-color: var(--brand-primary);
+    }
+    .plan-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 20px;
+    }
+    .plan-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .timeline-strip {
+      height: 18px;
+      border-radius: var(--radius-full);
+      background: #1e293b;
+      display: flex;
+      overflow: hidden;
+      margin: 10px 0;
+      border: 1px solid var(--border-subtle);
+    }
+    .timeline-seg {
+      height: 100%;
+    }
+    .seg-run { background: var(--status-success); }
+    .seg-stop { background: var(--status-error); }
+    .seg-small { background: var(--status-warn); }
+    .seg-plan { background: #334155; }
+    .timeline-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 115px;
+      position: relative;
+    }
+    .metric-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .metric-val-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .metric-value {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+    .metric-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .progress-bar {
+      background: var(--bg-input);
+      border-radius: var(--radius-full);
+      height: 8px;
+      overflow: hidden;
+      margin-top: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, #D6336C, #f06595);
+      height: 100%;
+      transition: width 0.3s;
+    }
+    .segmented-nav {
+      display: flex;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-subtle);
+    }
+    .segment-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      min-height: 48px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .segment-btn.active {
+      background: var(--brand-primary);
+      color: white;
+    }
+    .hmi-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .hmi-table th {
+      background: var(--bg-card);
+      padding: 12px 14px;
+      text-align: left;
+      color: var(--text-secondary);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .hmi-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+    }
+    .hmi-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .fab-btn {
+      position: fixed;
+      bottom: 84px;
+      right: 32px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      color: white;
+      font-size: 32px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(214, 51, 108, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .fab-btn:active {
+      transform: scale(0.94);
+    }
+    .kaizen-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .kaizen-card:hover {
+      border-color: var(--brand-primary);
+      background: rgba(214, 51, 108, 0.04);
+    }
+    .badge-tag {
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .tag-open { background: #451a24; color: #ff8787; border: 1px solid #742a2a; }
+    .tag-verify { background: #422d05; color: #ffd43b; border: 1px solid #744210; }
+    .tag-closed { background: #0f4024; color: #8ce99a; border: 1px solid #1e5e3a; }
+
+    /* Interlock Full-Screen Overlay */
+    .interlock-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(80, 8, 8, 0.96);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 30px 24px;
+      color: white;
+      text-align: center;
+    }
+    .interlock-stripes {
+      height: 28px;
+      width: 100%;
+      background: repeating-linear-gradient(45deg, #e03131, #e03131 20px, #000 20px, #000 40px);
+      box-shadow: 0 0 15px rgba(224, 49, 49, 0.8);
+    }
+    .downtime-timer-val {
+      font-size: 54px;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      color: #ffc9c9;
+      margin: 14px 0;
+      letter-spacing: 2px;
+    }
+    .btn-emergency-action {
+      background: #e03131;
+      color: white;
+      font-size: 20px;
+      font-weight: 800;
+      padding: 16px 36px;
+      border-radius: var(--radius-md);
+      border: 2px solid #ff8787;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(224, 49, 49, 0.7);
+      min-height: 64px;
+      transition: transform 0.08s, background 0.15s;
+    }
+    .btn-emergency-action:active {
+      transform: scale(0.97);
+      background: #c92a2a;
+    }
+
+    /* Small Stop Warning Card */
+    .smallstop-card {
+      background: #2a1f05;
+      border: 2px solid #f59f00;
+      color: #fff3bf;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 580px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Status Strip (Always Visible) -->
+  <header id="hmi-status-strip" role="banner">
+    <div class="strip-left">
+      <span class="strip-tag">LINGKUP HMI-T7 | KONSOL LOGIN OPERATOR LINI</span>
+      <span id="hmi-strip-machine-info">Mesin Packing #6 Unit 2</span>
+    </div>
+    <div class="strip-right">
+      <div class="status-item">
+        <span class="status-dot" id="hmi-strip-gw-dot"></span>
+        <span id="hmi-strip-gw-label">Gateway GW-100: ONLINE</span>
+      </div>
+      <div class="status-item">
+        <span class="status-dot" id="hmi-strip-plc-dot"></span>
+        <span id="hmi-strip-plc-label">PLC-ABC: ONLINE | Mesin Packing #6 Unit 2</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main id="hmi-container">
+
+    <!-- 1. LOGIN SCREEN -->
+    <section id="hmi-login-screen" class="auth-view" aria-label="Layar Login Operator HMI-T7">
+      <div class="auth-grid">
+        
+        <!-- Left: Form Card -->
+        <div class="hmi-card">
+          <h1 class="card-title">
+            <span class="emblem" aria-hidden="true">PC</span>
+            LOGIN OPERATOR PANEL HMI-T7
+          </h1>
+          <p class="card-desc">Silakan masukkan NIK/ID Operator dan PIN 6 digit shift Anda.</p>
+
+          <div id="hmi-login-error" class="alert-banner hidden" role="alert" aria-live="assertive">
+            <span id="hmi-login-error-text">ID Operator atau PIN tidak valid.</span>
+          </div>
+
+          <!-- Quick operator selector -->
+          <div class="operator-pills" aria-label="Pilih Cepat Operator Unit 2">
+            <button type="button" class="opr-pill active" data-id="op.slamet" data-nik="EMP-0401" data-name="Slamet Riyadi">Slamet (Packing #6)</button>
+            <button type="button" class="opr-pill" data-id="op.wahyu" data-nik="EMP-0402" data-name="Wahyu Saputra">Wahyu (Packing #5)</button>
+            <button type="button" class="opr-pill" data-id="spv.unit2" data-nik="EMP-0201" data-name="Dian Pratama">SPV (Dian)</button>
+            <button type="button" class="opr-pill" data-id="superadmin" data-nik="EMP-0001" data-name="Rizal Mahendra">SuperAdmin</button>
+          </div>
+
+          <form id="hmi-login-form" onsubmit="event.preventDefault(); handleHmiLogin();">
+            <div class="form-group">
+              <label class="form-label" for="hmi-operator-id">ID Operator / Username <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="hmi-operator-id"
+                  class="hmi-input"
+                  placeholder="enter your username..."
+                  value="op.slamet"
+                  required
+                  autocomplete="username"
+                  aria-required="true"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="hmi-pin">Kata Sandi / PIN Shift <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <input
+                  type="password"
+                  id="hmi-pin"
+                  class="hmi-input"
+                  placeholder="enter your password..."
+                  required
+                  maxlength="6"
+                  inputmode="numeric"
+                  aria-required="true"
+                />
+              </div>
+            </div>
+
+            <button type="button" id="btn-hmi-forgot-pin" class="forgot-link" onclick="openForgotPinScreen()">
+              Lupa PIN / Kata Sandi?
+            </button>
+
+            <button type="submit" id="btn-hmi-login" class="btn btn-primary" style="width: 100%;">
+              Masuk & Aktifkan Sesi Shift
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Numpad Card -->
+        <div class="hmi-card">
+          <h2 class="card-title" style="font-size: 18px;">
+            Numpad PIN Shift Cepat
+          </h2>
+          <p class="card-desc">Sentuh tombol angka berukuran besar (Touch &gt;= 56px)</p>
+
+          <div class="numpad-grid" role="group" aria-label="Numpad PIN Numerik">
+            <button type="button" class="numpad-btn" data-key="1">1</button>
+            <button type="button" class="numpad-btn" data-key="2">2</button>
+            <button type="button" class="numpad-btn" data-key="3">3</button>
+            <button type="button" class="numpad-btn" data-key="4">4</button>
+            <button type="button" class="numpad-btn" data-key="5">5</button>
+            <button type="button" class="numpad-btn" data-key="6">6</button>
+            <button type="button" class="numpad-btn" data-key="7">7</button>
+            <button type="button" class="numpad-btn" data-key="8">8</button>
+            <button type="button" class="numpad-btn" data-key="9">9</button>
+            <button type="button" class="numpad-btn btn-clr" data-key="CLR" aria-label="Hapus PIN">CLR</button>
+            <button type="button" class="numpad-btn" data-key="0">0</button>
+            <button type="button" class="numpad-btn btn-ok" data-key="OK" aria-label="Konfirmasi Masuk">OK</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. FORGOT PIN RECOVERY SCREEN -->
+    <section id="hmi-forgot-screen" class="auth-view hidden" aria-label="Layar Pemulihan PIN HMI">
+      <div class="hmi-card" style="max-width: 680px; margin: 0 auto; width: 100%;">
+        <h1 class="card-title" style="font-size: 22px;">
+          <span class="emblem" aria-hidden="true">&#128273;</span>
+          Pemulihan PIN HMI
+        </h1>
+        <p class="card-desc">
+          Lupa PIN / Kata Sandi Operator HMI - Please call your administrator to help you to reset your account password. Anda dapat mengirimkan permintaan reset resmi ke konsol Web Supervisor.
+        </p>
+
+        <div id="hmi-reset-ticket-status" class="alert-banner hidden" style="background: rgba(47, 158, 68, 0.15); border-color: var(--status-success); color: #8ce99a;">
+          <strong id="hmi-ticket-label">[MENUNGGU OTORISASI WEB]</strong> Tiket pemulihan berhasil diterbitkan untuk diverifikasi Supervisor / SuperAdmin.
+        </div>
+
+        <form onsubmit="event.preventDefault(); submitForgotPinRequest();">
+          <div class="form-group">
+            <label class="form-label" for="hmi-recovery-nik">ID Operator / NIK Terdaftar <span class="req">*</span></label>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="hmi-recovery-nik"
+                class="hmi-input"
+                placeholder="Masukkan ID Operator atau NIK (contoh: OPR-U2-01 / EMP-0402)"
+                required
+              />
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="button" id="btn-hmi-back-to-login" class="btn btn-secondary" onclick="backToLoginScreen()" style="flex: 1;">
+              Kembali ke Login
+            </button>
+            <button type="submit" id="btn-hmi-send-reset" class="btn btn-primary" style="flex: 1.4;">
+              Kirim Permintaan Reset ke SPV
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. APP SHELL (POST-LOGIN) -->
+    <section id="hmi-app-shell" class="hidden" aria-label="Konsol Utama Operator HMI-T7">
+      
+      <!-- Topbar -->
+      <header id="hmi-topbar" role="banner">
+        <div class="topbar-left">
+          <span class="emblem" style="background:var(--brand-primary);color:white;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;font-weight:900;font-size:13px;">PC</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--text-primary);">[HMI-T7] Panel Operator Lini</div>
+            <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">PLC-ABC | 192.168.10.20 <span class="status-dot" style="display:inline-block;width:6px;height:6px;background:var(--status-success);margin-left:4px;"></span> ONLINE</div>
+          </div>
+        </div>
+
+        <div class="topbar-center">
+          <span>LINE: <strong>Mesin Packing #6</strong></span>
+          <span>&bull;</span>
+          <span>SKU: <strong>GRM-250G</strong></span>
+          <span>&bull;</span>
+          <span>SHIFT: <strong id="hmi-topbar-shift">1 (07:00 - 15:00)</strong></span>
+          <span>&bull;</span>
+          <span id="hmi-topbar-status-badge" class="badge-status badge-run">RUN</span>
+        </div>
+
+        <div class="topbar-right">
+          <div style="text-align:right;">
+            <div id="hmi-topbar-user" style="font-weight:700;font-size:14px;">Wahyu Pratama</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Operator Lini Packing</div>
+          </div>
+          <button type="button" id="btn-hmi-mute-buzzer" class="btn-mute" onclick="muteHmiBuzzer()">
+            Mute Buzzer
+          </button>
+        </div>
+      </header>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-area">
+        
+        <!-- Tab 1: Home (Production Running Console) -->
+        <div id="hmi-tab-home">
+          
+          <!-- Run Time Production Plan Card & Timeline -->
+          <div class="plan-card" id="hmi-production-plan-card">
+            <div class="plan-header">
+              <div>
+                <h2 style="font-size:20px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:10px;">
+                  <span class="emblem" style="width:24px;height:24px;font-size:12px;background:var(--brand-primary);color:white;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;">PO</span>
+                  Run Time Production Plan
+                  <span id="hmi-active-order-badge" class="badge-tag tag-open">PO-2026-1101-PK06-S1</span>
+                </h2>
+                <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
+                  SKU: <strong id="hmi-active-sku-name" style="color:var(--text-primary);">SKU-GRM-250 (Garam Konsumsi 250g)</strong> | 
+                  Shift: <strong id="hmi-plan-shift-label">1 (07:00 - 15:00)</strong> | 
+                  Target Kecepatan: <strong id="hmi-plan-ideal-speed">41.67 pcs/menit</strong>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button type="button" id="btn-hmi-add-order-time" class="btn btn-primary" onclick="openOrderOrTimeModal()" style="height:46px;padding:0 20px;font-size:14px;">
+                  + Tambah Order / Waktu
+                </button>
+                <button type="button" id="btn-hmi-stop-order" class="btn btn-secondary" onclick="openStopOrderModal()" style="height:46px;padding:0 18px;font-size:14px;color:#ff8787;border-color:#742a2a;">
+                  Stop Order
+                </button>
+              </div>
+            </div>
+
+            <!-- Event Timeline -->
+            <div class="timeline-strip" id="hmi-event-timeline" title="Event Timeline Shift Berjalan">
+              <div class="timeline-seg seg-run" style="width: 68%;"></div>
+              <div class="timeline-seg seg-small" style="width: 4%;"></div>
+              <div class="timeline-seg seg-stop" style="width: 8%;"></div>
+              <div class="timeline-seg seg-plan" style="width: 20%;"></div>
+            </div>
+            <div class="timeline-legend">
+              <span>07:00</span>
+              <span>09:00</span>
+              <span>11:00</span>
+              <span>13:00</span>
+              <span id="hmi-timeline-end-time">15:00</span>
+            </div>
+          </div>
+
+          <!-- 8 Live Telemetry Metric Cards -->
+          <div class="metrics-grid">
+            
+            <!-- 1. Target Shift -->
+            <div class="metric-card" id="card-hmi-target">
+              <div class="metric-label">
+                <span>Target Shift</span>
+                <button type="button" id="btn-hmi-edit-target" class="btn-icon" onclick="openEditTargetModal()" aria-label="Ubah Target Output">&#9998;</button>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-target">10,000 pcs</span>
+              </div>
+              <div class="metric-subtext" id="hmi-target-subtext">Est. selesai: 14:45 WIB</div>
+            </div>
+
+            <!-- 2. Achievement % -->
+            <div class="metric-card" id="card-hmi-achievement">
+              <div class="metric-label">
+                <span>Achievement %</span>
+                <span class="badge-tag tag-closed" id="hmi-achievement-tag">ON TARGET</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-achievement">85.5%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="hmi-progress-fill" style="width: 85.5%;"></div>
+              </div>
+            </div>
+
+            <!-- 3. Finish Good -->
+            <div class="metric-card" id="card-hmi-finish-good">
+              <div class="metric-label">
+                <span>Finish Good (D003)</span>
+                <span style="font-size:11px;color:var(--text-muted);">GOOD OUTPUT</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-fg-pcs">8,550 pcs</span>
+              </div>
+              <div class="metric-subtext" id="hmi-metric-fg-kg">2,137.5 kg</div>
+            </div>
+
+            <!-- 4. Berat Bersih -->
+            <div class="metric-card" id="card-hmi-net-weight">
+              <div class="metric-label">
+                <span>Berat Bersih</span>
+                <span style="font-size:11px;color:var(--text-muted);">NET WEIGHT</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-net-weight">2,137.5 kg</span>
+              </div>
+              <div class="metric-subtext">Formula: 8,550 pcs x 0.25 kg</div>
+            </div>
+
+            <!-- 5. Total Diproses -->
+            <div class="metric-card" id="card-hmi-total-processed">
+              <div class="metric-label">
+                <span>Total Diproses</span>
+                <span style="font-size:11px;color:var(--text-muted);">TOTAL INFEED</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-total-processed">8,578 pcs</span>
+              </div>
+              <div class="metric-subtext">FG + Defect + Scrap</div>
+            </div>
+
+            <!-- 6. Speed D002 -->
+            <div class="metric-card" id="card-hmi-speed">
+              <div class="metric-label">
+                <span>Speed D002</span>
+                <span class="badge-tag tag-closed" id="hmi-speed-tag">NORMAL</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-speed">41.7 pcs/menit</span>
+              </div>
+              <div class="metric-subtext">Ideal: 41.67 pcs/menit</div>
+            </div>
+
+            <!-- 7. Defect D004/D007 -->
+            <div class="metric-card" id="card-hmi-defect">
+              <div class="metric-label">
+                <span>Defect D004/D007</span>
+                <span style="font-size:11px;color:#ffa8a8;">REWORK</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-defect" style="color:#ffa8a8;">28 pcs</span>
+                <button type="button" id="btn-hmi-add-defect" class="btn-quick-add" onclick="openDefectModal()" aria-label="Input Cepat Defect">+</button>
+              </div>
+              <div class="metric-subtext">7.0 kg garam rework</div>
+            </div>
+
+            <!-- 8. Scrap K3 D008 -->
+            <div class="metric-card" id="card-hmi-scrap">
+              <div class="metric-label">
+                <span>Scrap K3 D008</span>
+                <span style="font-size:11px;color:#ffd43b;">NON-FOOD</span>
+              </div>
+              <div class="metric-val-row">
+                <span class="metric-value" id="hmi-metric-scrap" style="color:#ffd43b;">4.5 kg</span>
+                <button type="button" id="btn-hmi-add-scrap" class="btn-quick-add" onclick="openScrapModal()" aria-label="Input Cepat Scrap">+</button>
+              </div>
+              <div class="metric-subtext">Garam tumpah/tercecer</div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Split: Downtime Unreason Queue & Live OT Sensors -->
+          <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:20px;">
+            
+            <!-- Left: Downtime Unreason Queue -->
+            <div class="hmi-card" id="hmi-unreason-queue-card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <h3 style="font-size:16px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+                  <span class="badge-count" id="hmi-unreason-queue-count">0</span>
+                  Downtime Unreason Queue
+                </h3>
+                <span style="font-size:12px;color:var(--text-secondary);">Wajib diisi sebelum keluar shift</span>
+              </div>
+
+              <div id="hmi-unreason-items" style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-size:13px;color:var(--text-muted);padding:12px;text-align:center;background:var(--bg-input);border-radius:var(--radius-md);">
+                  Tidak ada antrean henti mesin. Seluruh downtime telah diklasifikasi.
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Live OT Sensors Strip -->
+            <div class="hmi-card">
+              <h3 style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:14px;">
+                Sensor Telemetri Lini Aktif
+              </h3>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:14px;">
+                <div style="background:var(--bg-card);padding:10px 14px;border-radius:var(--radius-md);display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border-subtle);">
+                  <span style="color:var(--text-secondary);">Suhu Sealer (SEN-T01 / D005)</span>
+                  <strong id="hmi-sensor-temp" style="font-family:var(--font-mono);font-size:16px;">165.0 &deg;C</strong>
+                </div>
+                <div style="background:var(--bg-card);padding:10px 14px;border-radius:var(--radius-md);display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border-subtle);">
+                  <span style="color:var(--text-secondary);">Vibrasi Bearing (SEN-V01 / D006)</span>
+                  <strong id="hmi-sensor-vib" style="font-family:var(--font-mono);font-size:16px;">2.1 mm/s</strong>
+                </div>
+                <div style="background:var(--bg-card);padding:10px 14px;border-radius:var(--radius-md);display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border-subtle);">
+                  <span style="color:var(--text-secondary);">Relay Sirine (BUZ-01 / D011)</span>
+                  <strong id="hmi-sensor-buzzer" style="color:var(--status-success);font-size:14px;">OFF (Normal)</strong>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Tab 2: Log Activity -->
+        <div id="hmi-tab-log" class="hidden">
+          <div class="hmi-card" style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:16px;">
+              <div>
+                <h2 style="font-size:20px;font-weight:700;">Log Aktivitas Lokal Mesin Packing #6</h2>
+                <p style="color:var(--text-secondary);font-size:13px;">Kronologi kejadian operasional, perubahan status, dan intervensi shift aktif.</p>
+              </div>
+              <div style="display:flex;gap:12px;align-items:center;">
+                <select id="hmi-log-filter" class="hmi-input" style="height:44px;min-width:180px;font-size:14px;" onchange="filterHmiLogs()">
+                  <option value="ALL">Semua Log Shift</option>
+                  <option value="DOWNTIME">Downtime & Small Stop</option>
+                  <option value="ORDER">Order Produksi</option>
+                  <option value="QUALITY">Kualitas & Scrap</option>
+                  <option value="AUTH">Autentikasi & Sesi</option>
+                </select>
+                <input
+                  type="text"
+                  id="hmi-log-search"
+                  class="hmi-input"
+                  placeholder="Cari aktivitas (contoh: Order, Downtime)..."
+                  style="height:44px;width:260px;font-size:14px;"
+                  oninput="filterHmiLogs()"
+                />
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="hmi-table" id="hmi-logs-table">
+                <thead>
+                  <tr>
+                    <th style="width:160px;">Stempel Waktu</th>
+                    <th style="width:180px;">Nama Operator</th>
+                    <th style="width:140px;">Kategori</th>
+                    <th>Rincian Aktivitas</th>
+                  </tr>
+                </thead>
+                <tbody id="hmi-logs-tbody">
+                  <!-- Populated via loadHmiLogs() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Prev. Production (Serah Terima Shift) -->
+        <div id="hmi-tab-prev" class="hidden">
+          <div class="hmi-card" style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div>
+                <h2 style="font-size:20px;font-weight:700;">Serah Terima Shift & Evaluasi Produksi Lalu</h2>
+                <p style="color:var(--text-secondary);font-size:13px;">Pencapaian OEE dan pareto six big losses shift sebelumnya.</p>
+              </div>
+              <button type="button" id="btn-hmi-view-pareto" class="btn btn-primary" onclick="openParetoModal()" style="height:44px;padding:0 20px;font-size:14px;">
+                &#128202; Lihat Pareto Downtime
+              </button>
+            </div>
+
+            <!-- Previous Shift KPI Strip -->
+            <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:14px;margin-bottom:20px;">
+              <div style="background:var(--bg-card);padding:14px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:12px;color:var(--text-secondary);">OEE Shift Lalu</div>
+                <div id="hmi-prev-oee" style="font-size:22px;font-weight:800;color:var(--brand-primary);font-family:var(--font-mono);">78.4%</div>
+              </div>
+              <div style="background:var(--bg-card);padding:14px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:12px;color:var(--text-secondary);">Availability (A)</div>
+                <div id="hmi-prev-avail" style="font-size:22px;font-weight:800;color:var(--text-primary);font-family:var(--font-mono);">88.2%</div>
+              </div>
+              <div style="background:var(--bg-card);padding:14px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:12px;color:var(--text-secondary);">Performance (P)</div>
+                <div id="hmi-prev-perf" style="font-size:22px;font-weight:800;color:var(--text-primary);font-family:var(--font-mono);">91.5%</div>
+              </div>
+              <div style="background:var(--bg-card);padding:14px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:12px;color:var(--text-secondary);">Quality (Q)</div>
+                <div id="hmi-prev-qual" style="font-size:22px;font-weight:800;color:var(--text-primary);font-family:var(--font-mono);">97.1%</div>
+              </div>
+              <div style="background:var(--bg-card);padding:14px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:12px;color:var(--text-secondary);">Total Finish Good</div>
+                <div id="hmi-prev-fg" style="font-size:22px;font-weight:800;color:var(--status-success);font-family:var(--font-mono);">24,180 pcs</div>
+              </div>
+            </div>
+
+            <!-- Event Timeline Shift Lalu -->
+            <div style="margin-bottom:20px;">
+              <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Event Timeline Shift Lalu</div>
+              <div class="timeline-strip" id="hmi-prev-timeline">
+                <div class="timeline-seg seg-run" style="width: 55%;"></div>
+                <div class="timeline-seg seg-stop" style="width: 15%;"></div>
+                <div class="timeline-seg seg-run" style="width: 20%;"></div>
+                <div class="timeline-seg seg-small" style="width: 10%;"></div>
+              </div>
+            </div>
+
+            <!-- Rekapitulasi Waktu Henti -->
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Rekapitulasi Waktu Henti Shift Lalu</h3>
+            <div style="overflow-x:auto;">
+              <table class="hmi-table" id="hmi-prev-downtime-table">
+                <thead>
+                  <tr>
+                    <th>Alasan Gangguan / Henti</th>
+                    <th>Kategori Loss</th>
+                    <th>Frekuensi Kejadian</th>
+                    <th>Total Durasi (menit)</th>
+                  </tr>
+                </thead>
+                <tbody id="hmi-prev-downtime-tbody">
+                  <tr>
+                    <td>Heater Sealer Temperature Overheat / Elemen Rusak</td>
+                    <td><span class="badge-tag tag-open">L-01 Unplanned</span></td>
+                    <td>2 kali</td>
+                    <td><strong>35.0 mnt</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Roll Film Habis / Ganti Film</td>
+                    <td><span class="badge-tag tag-verify">L-02 Planned</span></td>
+                    <td>3 kali</td>
+                    <td><strong>18.5 mnt</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Salt Hopper Bridging / Garam Menggumpal</td>
+                    <td><span class="badge-tag tag-open">L-01 Unplanned</span></td>
+                    <td>1 kali</td>
+                    <td><strong>12.0 mnt</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Kaizen Lapangan & Maintenance -->
+        <div id="hmi-tab-kaizen" class="hidden">
+          <div class="hmi-card" style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div>
+                <h2 style="font-size:20px;font-weight:700;">Kaizen Lapangan & Pemeliharaan Mesin</h2>
+                <p style="color:var(--text-secondary);font-size:13px;">Daftar tiket perbaikan produksi dan bantuan teknisi pemeliharaan mandiri TPM.</p>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-primary" id="btn-kaizen-filter-open" onclick="filterKaizenView('OPEN')" style="height:42px;padding:0 18px;font-size:13px;">
+                  Open (<span id="hmi-kaizen-open-count">2</span>)
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-kaizen-filter-close" onclick="filterKaizenView('CLOSED')" style="height:42px;padding:0 18px;font-size:13px;">
+                  Close (<span id="hmi-kaizen-closed-count">4</span>)
+                </button>
+              </div>
+            </div>
+
+            <!-- Kaizen Cards List Container -->
+            <div id="hmi-kaizen-list" style="display:flex;flex-direction:column;gap:12px;">
+              <!-- Populated via loadKaizenTickets() -->
+            </div>
+          </div>
+
+          <!-- Floating Action Button '+' -->
+          <button type="button" class="fab-btn" id="btn-hmi-add-kaizen" onclick="openNewKaizenModal()" aria-label="Buat Tiket Kaizen Baru">+</button>
+        </div>
+
+        <!-- Tab 5: Profile & Digital SOP -->
+        <div id="hmi-tab-profile" class="hidden">
+          
+          <!-- Segmented Sub-tab Nav -->
+          <div class="segmented-nav" role="tablist">
+            <button type="button" class="segment-btn active" id="btn-subtab-profile" onclick="switchProfileSubtab('profile')">
+              &#128100; Profil &amp; Ubah PIN
+            </button>
+            <button type="button" class="segment-btn" id="btn-subtab-sop" onclick="switchProfileSubtab('sop')">
+              &#128214; Guideline SOP
+            </button>
+          </div>
+
+          <!-- Subpane 1: Operator Profile & Actions -->
+          <div id="hmi-profile-subpane-profile">
+            <div class="profile-grid">
+              
+              <!-- Left: Read-Only Profile Card -->
+              <div class="hmi-card">
+                <h2 class="card-title" style="margin-bottom:16px;">
+                  Identitas Operator Shift
+                </h2>
+
+                <table class="profile-table">
+                  <tbody>
+                    <tr>
+                      <th>ID Operator / NIK</th>
+                      <td id="prof-nik">EMP-0401</td>
+                    </tr>
+                    <tr>
+                      <th>Username</th>
+                      <td id="prof-username">op.slamet</td>
+                    </tr>
+                    <tr>
+                      <th>Nama Lengkap</th>
+                      <td id="prof-name">Slamet Riyadi</td>
+                    </tr>
+                    <tr>
+                      <th>Email</th>
+                      <td id="prof-email">-</td>
+                    </tr>
+                    <tr>
+                      <th>Departemen</th>
+                      <td id="prof-dept">Produksi Garam Unit 2</td>
+                    </tr>
+                    <tr>
+                      <th>Jabatan</th>
+                      <td id="prof-job">Operator Mesin Packing</td>
+                    </tr>
+                    <tr>
+                      <th>Peran RBAC</th>
+                      <td id="prof-role">OPERATOR (HMI-T7 Only)</td>
+                    </tr>
+                    <tr>
+                      <th>Tipe Pengguna</th>
+                      <td id="prof-type">PRODUCTION</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div style="margin-top:24px;display:flex;gap:12px;">
+                  <button type="button" id="btn-hmi-change-pin" class="btn btn-secondary" onclick="openChangePinModal()" style="flex:1;">
+                    &#128274; Ubah PIN / Kata Sandi
+                  </button>
+                </div>
+
+                <div style="margin-top:12px;">
+                  <button type="button" id="btn-hmi-logout" class="btn btn-danger" onclick="openLogoutModal()" style="width:100%;">
+                    &#128682; Keluar Shift / Logout HMI-T7
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: Device & Scope Card -->
+              <div class="hmi-card">
+                <h2 class="card-title" style="font-size:18px;margin-bottom:12px;">
+                  Hak Akses &amp; Pengikatan Perangkat
+                </h2>
+                <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;display:flex;flex-direction:column;gap:12px;">
+                  <div style="background:var(--bg-card);padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                    <strong style="color:var(--text-primary);">[TERIKAT KE LINI]</strong><br>
+                    Mesin Packing #6 - Unit 2 Garam | PLC-ABC (192.168.10.20) | SWH-8P
+                  </div>
+                  <div style="background:var(--bg-card);padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                    <strong style="color:var(--text-primary);">[BATAS LINGKUP]</strong><br>
+                    Menu Configuration Master (Area, SKU, Downtime Reason, User Management) dan Approval Shift Report hanya dapat diakses melalui Aplikasi Web SPV/Manager.
+                  </div>
+                  <div style="background:var(--bg-card);padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                    <strong style="color:var(--text-primary);">[AUDIT TRAIL]</strong><br>
+                    Seluruh input operator dicatat secara otomatis oleh Gateway GW-100 dan tersinkronisasi ke server.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Subpane 2: Guideline SOP Digital -->
+          <div id="hmi-profile-subpane-sop" class="hidden">
+            <div class="hmi-card">
+              <h2 style="font-size:20px;font-weight:700;margin-bottom:12px;">Dokumen Prosedur Operasional Standar (SOP Digital)</h2>
+              <p style="color:var(--text-secondary);font-size:13px;margin-bottom:18px;">Pilih dokumen SOP untuk dibuka dalam mode kiosk read-only lantai produksi.</p>
+
+              <div id="sop-list" style="display:flex;flex-direction:column;gap:12px;">
+                <div class="kaizen-card" id="sop-item-1" onclick="openSopPreview('SOP Pengoperasian Standar Mesin VFFS Packing #6', 'SOP-PROD-PK06-01')">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                      <strong style="font-size:16px;color:var(--text-primary);">SOP Pengoperasian Standar Mesin VFFS Packing #6</strong>
+                      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Kode: SOP-PROD-PK06-01 &bull; Kategori: Pengoperasian Mesin &bull; Revisi: Rev. 3</div>
+                    </div>
+                    <span class="btn btn-secondary" style="height:38px;padding:0 14px;font-size:13px;">Buka Dokumen</span>
+                  </div>
+                </div>
+
+                <div class="kaizen-card" id="sop-item-2" onclick="openSopPreview('Instruksi Kerja Penggantian Roll Film & Sealer', 'SOP-PROD-PK06-02')">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                      <strong style="font-size:16px;color:var(--text-primary);">Instruksi Kerja Penggantian Roll Film &amp; Sealer</strong>
+                      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Kode: SOP-PROD-PK06-02 &bull; Kategori: Setup &amp; Adjustment &bull; Revisi: Rev. 2</div>
+                    </div>
+                    <span class="btn btn-secondary" style="height:38px;padding:0 14px;font-size:13px;">Buka Dokumen</span>
+                  </div>
+                </div>
+
+                <div class="kaizen-card" id="sop-item-3" onclick="openSopPreview('Panduan Pembersihan Kerak Garam Auger Hopper', 'SOP-PROD-PK06-03')">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                      <strong style="font-size:16px;color:var(--text-primary);">Panduan Pembersihan Kerak Garam Auger Hopper</strong>
+                      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Kode: SOP-PROD-PK06-03 &bull; Kategori: Kebersihan &amp; Sanitasi 5S &bull; Revisi: Rev. 1</div>
+                    </div>
+                    <span class="btn btn-secondary" style="height:38px;padding:0 14px;font-size:13px;">Buka Dokumen</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Bottom Nav -->
+      <nav id="hmi-bottom-nav" role="navigation" aria-label="Navigasi Bawah HMI-T7">
+        <button type="button" class="nav-tab-btn active" id="nav-hmi-home" onclick="switchHmiTab('home')">
+          <span class="tab-icon" aria-hidden="true">&#127968;</span>
+          <span>Home</span>
+          <span id="hmi-unreason-badge" class="badge-count nav-badge hidden">0</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-hmi-log" onclick="switchHmiTab('log')">
+          <span class="tab-icon" aria-hidden="true">&#128221;</span>
+          <span>Log Activity</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-hmi-prev" onclick="switchHmiTab('prev')">
+          <span class="tab-icon" aria-hidden="true">&#128202;</span>
+          <span>Prev. Production</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-hmi-kaizen" onclick="switchHmiTab('kaizen')">
+          <span class="tab-icon" aria-hidden="true">&#9874;</span>
+          <span>Kaizen</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-hmi-profile" onclick="switchHmiTab('profile')">
+          <span class="tab-icon" aria-hidden="true">&#128100;</span>
+          <span>Profile</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-hmi-logout" onclick="openLogoutModal()" style="color:#ff8787;">
+          <span class="tab-icon" aria-hidden="true">&#128682;</span>
+          <span>Logout</span>
+        </button>
+      </nav>
+
+    </section>
+
+  </main>
+
+  <!-- 4. MODAL UBAH PIN -->
+  <div id="hmi-modal-change-pin" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-change-pin-title">
+    <div class="modal-card">
+      <h2 id="modal-change-pin-title" class="card-title" style="margin-bottom:8px;">
+        Ubah PIN / Kata Sandi
+      </h2>
+      <p class="card-desc">Masukkan PIN lama dan PIN baru 6 digit numerik.</p>
+
+      <div id="hmi-change-pin-error" class="alert-banner hidden"></div>
+
+      <form onsubmit="event.preventDefault(); submitChangePin();">
+        <div class="form-group">
+          <label class="form-label" for="hmi-old-pin">PIN / Kata Sandi Lama <span class="req">*</span></label>
+          <input type="password" id="hmi-old-pin" class="hmi-input" placeholder="enter your old password..." required maxlength="6" inputmode="numeric">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-new-pin">PIN / Kata Sandi Baru (6 digit) <span class="req">*</span></label>
+          <input type="password" id="hmi-new-pin" class="hmi-input" placeholder="enter your new password..." required maxlength="6" inputmode="numeric">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-confirm-pin">Konfirmasi PIN / Kata Sandi Baru <span class="req">*</span></label>
+          <input type="password" id="hmi-confirm-pin" class="hmi-input" placeholder="confirm your new password..." required maxlength="6" inputmode="numeric">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-hmi-cancel-change-pin" class="btn btn-secondary" onclick="closeChangePinModal()">
+            Batal
+          </button>
+          <button type="submit" id="btn-hmi-save-pin" class="btn btn-primary">
+            Simpan PIN / Kata Sandi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. MODAL LOGOUT CONFIRMATION & CHECKLIST -->
+  <div id="hmi-modal-logout" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-logout-title">
+    <div class="modal-card" style="max-width:580px;">
+      <h2 id="modal-logout-title" class="card-title" style="margin-bottom:6px;color:#ff8787;">
+        Konfirmasi Logout HMI-T7
+      </h2>
+      <p style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">
+        Akhiri Sesi Operator Shift?
+      </p>
+
+      <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px;margin-bottom:18px;">
+        <div style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">Checklist Penutupan Sesi Shift</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span>Finish Good Tercatat:</span>
+            <strong>25,652 pcs (6,413.0 kg)</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span>Defect &amp; Scrap K3:</span>
+            <strong>28 pcs defect &bull; 19 pcs scrap</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span>Antrean Downtime:</span>
+            <strong style="color:var(--status-success);">[OK] 0 antrean tersisa</strong>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;">
+        Anda akan keluar dari akun operator. Data produksi mesin tetap diakuisisi otomatis di latar belakang oleh PLC-ABC &amp; Gateway GW-100 selama pergantian operator.
+      </p>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-hmi-cancel-logout" class="btn btn-secondary" onclick="closeLogoutModal()">
+          Batal
+        </button>
+        <button type="button" id="btn-hmi-confirm-logout" class="btn btn-danger" onclick="executeHmiLogout()">
+          Ya, Keluar Shift
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. MODAL PILIH TAMBAH ORDER / EXTRA TIME -->
+  <div id="hmi-modal-order-or-time" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:480px;">
+      <h2 class="card-title" style="margin-bottom:8px;">+ Tambah Order / Waktu</h2>
+      <p class="card-desc">Pilih tindakan penjadwalan produksi untuk Mesin Packing #6.</p>
+      
+      <div style="display:flex;flex-direction:column;gap:12px;margin:20px 0;">
+        <button type="button" class="btn btn-primary" onclick="proceedToNewOrderModal()" style="text-align:left;padding:0 20px;justify-content:flex-start;">
+          <span style="font-size:20px;">&#128221;</span>
+          <span>Mulai Order Produksi Shift Baru</span>
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-hmi-extra-time" onclick="executeExtraTime(30)" style="text-align:left;padding:0 20px;justify-content:flex-start;">
+          <span style="font-size:20px;">&#9200;</span>
+          <span>Extra Time (+30 menit)</span>
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeOrderOrTimeModal()">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. MODAL MULAI ORDER PRODUKSI BARU -->
+  <div id="hmi-modal-new-order" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-order-title">
+    <div class="modal-card" style="max-width:620px;">
+      <h2 id="modal-order-title" class="card-title" style="margin-bottom:8px;">
+        Mulai Order Produksi Baru
+      </h2>
+      <p class="card-desc">Konfigurasikan target dan parameter SKU garam untuk lini pengemasan aktif.</p>
+
+      <form onsubmit="event.preventDefault(); submitNewOrder();">
+        <div class="form-group">
+          <label class="form-label" for="hmi-order-number">Nomor Production Order <span class="req">*</span></label>
+          <input type="text" id="hmi-order-number" class="hmi-input" value="PO-2026-1101-PK06-S1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-order-sku">Pilih Produk SKU Garam <span class="req">*</span></label>
+          <select id="hmi-order-sku" class="hmi-input" onchange="onSkuSelectChange()" required>
+            <option value="1" data-ct="0.024" data-speed="41.67">SKU-GRM-250 (Garam Konsumsi 250g)</option>
+            <option value="2" data-ct="0.030" data-speed="33.33">SKU-GRM-500 (Garam Dapur 500g)</option>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group">
+            <label class="form-label">Ideal Cycle Time</label>
+            <input type="text" id="hmi-order-cycle-time" class="hmi-input" value="0.024 menit/pcs" readonly style="background:#182234;color:var(--text-secondary);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kecepatan Target (Ideal)</label>
+            <input type="text" id="hmi-order-ideal-speed" class="hmi-input" value="41.67 pcs/menit" readonly style="background:#182234;color:var(--text-secondary);">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-order-target">Target Output Shift (pcs) <span class="req">*</span></label>
+          <input type="number" id="hmi-order-target" class="hmi-input" value="10000" min="100" step="100" required>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-hmi-cancel-order" class="btn btn-secondary" onclick="closeNewOrderModal()">
+            Batal
+          </button>
+          <button type="submit" id="btn-hmi-activate-order" class="btn btn-primary">
+            Aktifkan Order ke PLC-ABC
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 8. MODAL UBAH TARGET SHIFT -->
+  <div id="hmi-modal-edit-target" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-edit-target-title">
+    <div class="modal-card" style="max-width:500px;">
+      <h2 id="modal-edit-target-title" class="card-title" style="margin-bottom:8px;">
+        Penyesuaian Target Shift
+      </h2>
+      <p class="card-desc">Ubah target output produksi shift untuk order aktif.</p>
+
+      <form onsubmit="event.preventDefault(); submitEditTarget();">
+        <div class="form-group">
+          <label class="form-label" for="hmi-edit-target-input">Target Output Shift (pcs) <span class="req">*</span></label>
+          <input type="number" id="hmi-edit-target-input" class="hmi-input" value="12000" min="100" step="100" required>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-hmi-cancel-edit-target" class="btn btn-secondary" onclick="closeEditTargetModal()">
+            Batal
+          </button>
+          <button type="submit" id="btn-hmi-save-target" class="btn btn-primary">
+            Simpan Perubahan Target
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 9. MODAL INPUT CEPAT DEFECT (L-05) -->
+  <div id="hmi-modal-defect" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-defect-title">
+    <div class="modal-card" style="max-width:580px;">
+      <h2 id="modal-defect-title" class="card-title" style="margin-bottom:8px;color:#ffa8a8;">
+        Input Cepat Produk Cacat (Process Defect L-05)
+      </h2>
+      <p class="card-desc">Pencatatan sachet garam bocor/cacat yang dapat di-rework.</p>
+
+      <form onsubmit="event.preventDefault(); submitDefectQuality();">
+        <!-- Quick Counter Buttons -->
+        <div style="margin-bottom:16px;">
+          <label class="form-label">Penambahan Cepat (Touch Ergonomic &gt;= 56px)</label>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="btn btn-secondary" id="btn-defect-plus-1" onclick="addDefectCount(1)" style="flex:1;font-size:18px;font-weight:800;">+1</button>
+            <button type="button" class="btn btn-secondary" id="btn-defect-plus-5" onclick="addDefectCount(5)" style="flex:1;font-size:18px;font-weight:800;">+5</button>
+            <button type="button" class="btn btn-secondary" id="btn-defect-plus-10" onclick="addDefectCount(10)" style="flex:1;font-size:18px;font-weight:800;">+10</button>
+            <button type="button" class="btn btn-secondary" onclick="resetDefectCount()" style="flex:0.8;font-size:14px;color:#ff8787;">Reset</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-defect-qty">Jumlah Tambahan Sachet Defect (pcs) <span class="req">*</span></label>
+          <input type="number" id="hmi-defect-qty" class="hmi-input" value="15" min="1" required oninput="calcDefectWeight()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-defect-reason">Penyebab Cacat Kualitas <span class="req">*</span></label>
+          <select id="hmi-defect-reason" class="hmi-input" required>
+            <option value="1">Bocor Sealing / Panas Kurang</option>
+            <option value="2">Kemasan Robek / Aus Pisau</option>
+            <option value="3">Berat Di Luar Batas Toleransi</option>
+            <option value="4">Coding Tanggal Kedaluwarsa Buram</option>
+          </select>
+        </div>
+
+        <div style="background:var(--bg-input);padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);margin-bottom:16px;">
+          <div style="font-size:12px;color:var(--text-secondary);">Konversi Berat Otomatis:</div>
+          <strong id="hmi-defect-calc-weight" style="font-size:16px;color:var(--brand-primary);font-family:var(--font-mono);">
+            15 pcs x 0.25 kg = 3.75 kg garam rework
+          </strong>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-hmi-cancel-defect" class="btn btn-secondary" onclick="closeDefectModal()">
+            Batal
+          </button>
+          <button type="submit" id="btn-hmi-save-defect" class="btn btn-primary">
+            Simpan ke Register D007 &amp; Server
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 10. MODAL INPUT GARAM TUMPAH / SCRAP K3 (L-06) -->
+  <div id="hmi-modal-scrap" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-scrap-title">
+    <div class="modal-card" style="max-width:580px;">
+      <h2 id="modal-scrap-title" class="card-title" style="margin-bottom:8px;color:#ffd43b;">
+        Input Garam Tumpah / Scrap K3 (L-06)
+      </h2>
+      <p class="card-desc">Pencatatan garam tumpah non-pangan K3 yang harus diafkir.</p>
+
+      <form onsubmit="event.preventDefault(); submitScrapK3();">
+        <div class="form-group">
+          <label class="form-label" for="hmi-scrap-weight">Berat Garam Tumpah (kg) <span class="req">*</span></label>
+          <input type="number" step="0.1" id="hmi-scrap-weight" class="hmi-input" value="4.5" min="0.1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-scrap-reason">Penyebab Scrap K3 <span class="req">*</span></label>
+          <select id="hmi-scrap-reason" class="hmi-input" required>
+            <option value="Garam Tumpah saat Kalibrasi Hopper">Garam Tumpah saat Kalibrasi Hopper</option>
+            <option value="Garam Tercecer di Area Konveyor">Garam Tercecer di Area Konveyor</option>
+            <option value="Terkontaminasi Minyak Pelumas Mesin">Terkontaminasi Minyak Pelumas Mesin</option>
+            <option value="Sachet Robek Kontak dengan Lantai">Sachet Robek Kontak dengan Lantai</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-hmi-cancel-scrap" class="btn btn-secondary" onclick="closeScrapModal()">
+            Batal
+          </button>
+          <button type="submit" id="btn-hmi-save-scrap" class="btn btn-primary">
+            Simpan ke Register D008 &amp; Server
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 11. MODAL STOP ORDER PRODUKSI -->
+  <div id="hmi-modal-stop-order" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-stop-order-title">
+    <div class="modal-card" style="max-width:500px;">
+      <h2 id="modal-stop-order-title" class="card-title" style="margin-bottom:8px;color:#ff8787;">
+        Hentikan Order Produksi?
+      </h2>
+      <p class="card-desc">Order produksi aktif akan diselesaikan dan mesin kembali ke kondisi Standby siap untuk batch berikutnya.</p>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-hmi-cancel-stop-order" class="btn btn-secondary" onclick="closeStopOrderModal()">
+          Batal
+        </button>
+        <button type="button" id="btn-hmi-confirm-stop-order" class="btn btn-danger" onclick="executeStopOrder()">
+          Ya, Hentikan Order
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. FULL-SCREEN INTERLOCK ALARM BUZZER DOWNTIME -->
+  <div id="hmi-interlock-modal" class="interlock-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="interlock-title">
+    <div class="interlock-stripes"></div>
+    
+    <div style="max-width:720px;margin:auto;">
+      <div style="font-size:36px;font-weight:900;letter-spacing:1.5px;color:#ff8787;margin-bottom:12px;" id="interlock-title">
+        [STOP] DOWNTIME
+      </div>
+      <p style="font-size:18px;color:#ffc9c9;margin-bottom:16px;">
+        Mesin Packing #6 Terhenti Otomatis oleh PLC-ABC | Sirine BUZ-01 Aktif
+      </p>
+      
+      <div style="background:rgba(0,0,0,0.4);border:1px solid #ff8787;border-radius:var(--radius-lg);padding:20px;margin-bottom:24px;">
+        <div style="font-size:14px;color:#ffa8a8;font-weight:700;">DURASI HENTI MESIN AKTIF:</div>
+        <div id="hmi-downtime-timer" class="downtime-timer-val">00:01:24</div>
+        <div style="font-size:13px;color:#ffd8a8;font-family:var(--font-mono);">
+          Trigger: D000=3 (FAULT) &bull; D001=4 (Heater Overheat) &bull; SEN-T01=192.0 &deg;C &bull; D011=1 (Buzzer ON)
+        </div>
+      </div>
+
+      <button type="button" id="btn-hmi-mute-and-classify" class="btn-emergency-action" onclick="muteAndClassifyDowntime()">
+        Matikan Buzzer &amp; Isi Alasan Downtime
+      </button>
+    </div>
+
+    <div class="interlock-stripes"></div>
+  </div>
+
+  <!-- 13. MODAL KLASIFIKASI ALASAN DOWNTIME -->
+  <div id="hmi-modal-classify-downtime" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-classify-title">
+    <div class="modal-card" style="max-width:620px;">
+      <h2 id="modal-classify-title" class="card-title" style="margin-bottom:8px;">
+        Klasifikasi Alasan Downtime
+      </h2>
+      <p class="card-desc">Tentukan kategori loss dan penyebab gangguan henti mesin.</p>
+
+      <form onsubmit="event.preventDefault(); submitDowntimeClassification();">
+        <div class="form-group">
+          <label class="form-label" for="hmi-downtime-loss-category">Kategori Loss Six Big Losses <span class="req">*</span></label>
+          <select id="hmi-downtime-loss-category" class="hmi-input" required>
+            <option value="L-01">L-01 Equipment Failure</option>
+            <option value="L-02">L-02 Setup and Adjustment</option>
+            <option value="L-03">L-03 Idle and Minor Stoppage</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-downtime-reason">Alasan Downtime Spesifik <span class="req">*</span></label>
+          <select id="hmi-downtime-reason" class="hmi-input" required>
+            <option value="1">Heater Sealer Temperature Overheat / Elemen Rusak</option>
+            <option value="2">Rotary Cutter Jammed / Aus Pisau</option>
+            <option value="3">Salt Hopper Bridging / Garam Menggumpal</option>
+            <option value="4">Roll Film Habis / Ganti Film</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hmi-downtime-action">Tindakan Perbaikan / Catatan Teknis <span class="req">*</span></label>
+          <textarea id="hmi-downtime-action" class="hmi-input" rows="3" placeholder="Pembersihan kerak garam pada rahang sealer dan reset termokopel..." required style="height:auto;padding:12px;font-size:14px;resize:vertical;">Pembersihan kerak garam pada rahang sealer dan reset termokopel</textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-hmi-close-downtime" class="btn btn-secondary" onclick="closeClassifyDowntimeModal()">
+            Tutup (Simpan ke Antrean)
+          </button>
+          <button type="submit" id="btn-hmi-save-downtime" class="btn btn-primary">
+            Simpan Alasan Downtime
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 14. MODAL POP-UP SMALL STOP (L-03) -->
+  <div id="hmi-small-stop-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="smallstop-card">
+      <div style="font-size:26px;font-weight:900;color:#ffd43b;margin-bottom:8px;">
+        [WARN] SMALL STOP
+      </div>
+      <p style="font-size:15px;color:#fff3bf;margin-bottom:16px;">
+        Mesin Berhenti Singkat (D000=1, D002=0) Tanpa Output &gt; 120 Detik. Sirine BUZ-01 tidak aktif.
+      </p>
+
+      <div style="background:rgba(0,0,0,0.3);padding:14px;border-radius:var(--radius-md);margin-bottom:20px;font-size:14px;">
+        Eskalasi otomatis menuju batas 5 menit dalam:
+        <strong id="hmi-small-stop-countdown" style="font-size:22px;color:#ffd43b;font-family:var(--font-mono);display:block;margin-top:6px;">02:45</strong>
+      </div>
+
+      <button type="button" id="btn-hmi-resolve-small-stop" class="btn btn-primary" onclick="resolveSmallStop()" style="width:100%;height:52px;font-size:16px;">
+        Selesaikan Small Stop
+      </button>
+    </div>
+  </div>
+
+  <!-- 15. MODAL PARETO DOWNTIME SHIFT LALU -->
+  <div id="hmi-modal-pareto" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-pareto-title">
+    <div class="modal-card" style="max-width:680px;">
+      <h2 id="modal-pareto-title" class="card-title" style="margin-bottom:8px;">
+        Pareto Downtime Shift Sebelumnya
+      </h2>
+      <p class="card-desc">Urutan gangguan dari durasi terpanjang ke terpendek dengan pemisahan Planned vs Unplanned.</p>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin:20px 0;">
+        <div style="background:var(--bg-card);padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px;">
+            <span><strong>1. Heater Sealer Temperature Overheat</strong> <span class="badge-tag tag-open">L-01 Unplanned</span></span>
+            <strong style="color:#ff8787;">35.0 mnt (53.4%)</strong>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:53.4%;background:#e03131;"></div></div>
+        </div>
+
+        <div style="background:var(--bg-card);padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px;">
+            <span><strong>2. Roll Film Habis / Ganti Film</strong> <span class="badge-tag tag-verify">L-02 Planned</span></span>
+            <strong style="color:#ffd43b;">18.5 mnt (28.2%)</strong>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:28.2%;background:#f59f00;"></div></div>
+        </div>
+
+        <div style="background:var(--bg-card);padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px;">
+            <span><strong>3. Salt Hopper Bridging / Garam Menggumpal</strong> <span class="badge-tag tag-open">L-01 Unplanned</span></span>
+            <strong style="color:#ff8787;">12.0 mnt (18.4%)</strong>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:18.4%;background:#e03131;"></div></div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-hmi-close-pareto" class="btn btn-secondary" onclick="closeParetoModal()">
+          Tutup Pareto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16. MODAL BUAT TIKET KAIZEN BARU -->
+  <div id="hmi-modal-new-kaizen" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-kaizen-title">
+    <div class="modal-card" style="max-width:680px;">
+      <h2 id="modal-kaizen-title" class="card-title" style="margin-bottom:8px;">
+        Buat Tiket Maintenance Kaizen
+      </h2>
+      <p class="card-desc">Pelaporan kendala mesin lapangan dan permintaan bantuan perbaikan teknisi.</p>
+
+      <form onsubmit="event.preventDefault(); submitNewKaizenTicket();">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;font-size:13px;background:var(--bg-input);padding:10px 14px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+          <div>Line: <strong>Mesin Packing #6</strong></div>
+          <div>Area: <strong>Unit 2 Garam</strong></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kaizen-submachine">Sub-Mesin Terkait <span class="req">*</span></label>
+          <select id="kaizen-submachine" class="hmi-input" required>
+            <option value="Rotary Cutter & Main Drive">Rotary Cutter & Main Drive</option>
+            <option value="Vertical & Horizontal Heater Sealer">Vertical & Horizontal Heater Sealer</option>
+            <option value="Auger Filler & Salt Hopper">Auger Filler & Salt Hopper</option>
+            <option value="Discharge Conveyor & Checkweigher">Discharge Conveyor & Checkweigher</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kaizen-title">Judul Masalah <span class="req">*</span></label>
+          <input type="text" id="kaizen-title" class="hmi-input" value="Pisau Rotary Cutter Berkarat dan Tumpul Akibat Kerak Garam" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kaizen-desc">Deskripsi Masalah <span class="req">*</span></label>
+          <textarea id="kaizen-desc" class="hmi-input" rows="2" style="height:auto;padding:10px;" required>Kemasan garam sering tidak putus sempurna dan robek di bagian sealer ujung</textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label" for="kaizen-category">Kategori Masalah <span class="req">*</span></label>
+            <select id="kaizen-category" class="hmi-input" required>
+              <option value="Kerusakan Komponen / Part Wear">Kerusakan Komponen / Part Wear</option>
+              <option value="Kebersihan & 5S">Kebersihan & 5S</option>
+              <option value="Kelistrikan & Sensor">Kelistrikan & Sensor</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kaizen-criteria">Kriteria Dampak <span class="req">*</span></label>
+            <select id="kaizen-criteria" class="hmi-input" required>
+              <option value="Kualitas & Downtime">Kualitas & Downtime</option>
+              <option value="Kecepatan & Speed">Kecepatan & Speed</option>
+              <option value="Safety & K3">Safety & K3</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kaizen-pic">PIC Teknisi Maintenance <span class="req">*</span></label>
+          <select id="kaizen-pic" class="hmi-input" required>
+            <option value="tech.maint">tech.maint (Arif Kurniawan - Teknisi Mekanik)</option>
+            <option value="spv.unit2">spv.unit2 (Dian Pratama - Supervisor)</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeNewKaizenModal()">Batal</button>
+          <button type="submit" id="btn-hmi-save-kaizen" class="btn btn-primary">Simpan Tiket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 17. MODAL INPUT PERBAIKAN STEP 2 TEKNISI -->
+  <div id="hmi-modal-kaizen-step2" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-step2-title">
+    <div class="modal-card" style="max-width:680px;">
+      <h2 id="modal-step2-title" class="card-title" style="margin-bottom:8px;">
+        Improvement Information (Step 2 Teknisi)
+      </h2>
+      <p class="card-desc">Pencatatan tindakan pemulihan dan perbaikan oleh Teknisi Maintenance.</p>
+
+      <form onsubmit="event.preventDefault(); submitKaizenStep2();">
+        <div class="form-group">
+          <label class="form-label" for="kaizen-root-cause">Analisis Akar Masalah (Root Cause) <span class="req">*</span></label>
+          <textarea id="kaizen-root-cause" class="hmi-input" rows="2" style="height:auto;padding:10px;" required>Kristal NaCl menumpuk di sela bantalan pisau rotary karena seal pelindung aus</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kaizen-action">Tindakan Perbaikan (Corrective Action) <span class="req">*</span></label>
+          <textarea id="kaizen-action" class="hmi-input" rows="2" style="height:auto;padding:10px;" required>Penggantian mata pisau stainless SS316 baru dan pelumasan bearing dengan food grade grease</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kaizen-resolution-type">Jenis Penyelesaian <span class="req">*</span></label>
+          <select id="kaizen-resolution-type" class="hmi-input" required>
+            <option value="Penggantian Part Baru">Penggantian Part Baru</option>
+            <option value="Pembersihan & Kalibrasi">Pembersihan & Kalibrasi</option>
+            <option value="Modifikasi Mekanikal">Modifikasi Mekanikal</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeKaizenStep2Modal()">Batal</button>
+          <button type="submit" id="btn-hmi-finish-repair" class="btn btn-primary">Selesai Perbaikan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 18. MODAL VERIFIKASI LAPANGAN KAIZEN -->
+  <div id="hmi-modal-kaizen-verify" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-verify-title">
+    <div class="modal-card" style="max-width:640px;">
+      <h2 id="modal-verify-title" class="card-title" style="margin-bottom:8px;">
+        Verifikasi Lapangan Hasil Perbaikan
+      </h2>
+      <p class="card-desc">Operator produksi memeriksa kondisi mesin setelah tindakan teknisi sebelum menutup tiket.</p>
+
+      <div style="background:var(--bg-input);padding:14px;border-radius:var(--radius-md);margin:16px 0;font-size:14px;border:1px solid var(--border-subtle);">
+        <div style="color:var(--text-secondary);font-size:12px;">Tindakan Teknisi:</div>
+        <strong id="kaizen-verify-action-text" style="color:var(--text-primary);display:block;margin-top:4px;">
+          Penggantian mata pisau stainless SS316 baru dan pelumasan bearing dengan food grade grease
+        </strong>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="kaizen-revise-reason">Catatan / Alasan Penolakan (Jika Minta Revisi)</label>
+        <textarea id="kaizen-revise-reason" class="hmi-input" rows="2" placeholder="Hasil pemotongan masih terdapat gerigi kasar di sisi kiri sachet" style="height:auto;padding:10px;"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-hmi-revise" class="btn btn-secondary" onclick="executeKaizenRevise()" style="color:#ff8787;border-color:#742a2a;">
+          Minta Revisi (NOT OK)
+        </button>
+        <button type="button" id="btn-hmi-verify-ok" class="btn btn-primary" onclick="executeKaizenVerifyOk()">
+          Verifikasi OK (CLOSED)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19. MODAL PRATINJAU DOKUMEN SOP DIGITAL (MODE KIOSK) -->
+  <div id="hmi-sop-preview-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-sop-title">
+    <div class="modal-card" style="max-width:900px;height:85vh;display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:12px;margin-bottom:16px;">
+        <div>
+          <h2 id="modal-sop-title" style="font-size:18px;font-weight:700;">SOP Pengoperasian Standar Mesin VFFS Packing #6</h2>
+          <span style="font-size:12px;color:var(--text-secondary);">Mode Kiosk Read-Only &bull; PT XYZ Unit 2 Garam Beryodium</span>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="closeSopPreview()" style="height:38px;padding:0 16px;font-size:13px;">Tutup</button>
+      </div>
+
+      <div style="flex:1;background:#090e17;border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:24px;overflow-y:auto;font-size:15px;line-height:1.7;">
+        <h3 style="color:#ff85b3;margin-bottom:12px;">1. Tujuan &amp; Ruang Lingkup</h3>
+        <p style="margin-bottom:16px;color:var(--text-secondary);">
+          Prosedur ini memandu operator dalam mengoperasikan Mesin Packing VFFS #6 untuk menghasilkan kemasan sachet garam 250g yang kedap udara dan sesuai standar mutu SNI.
+        </p>
+
+        <h3 style="color:#ff85b3;margin-bottom:12px;">2. Pemeriksaan Awal Sebelum Start Mesin (Checklist 5S)</h3>
+        <ul style="margin-bottom:16px;padding-left:24px;color:var(--text-secondary);">
+          <li>Pastikan suhu sealer rahang vertikal &amp; horizontal mencapai setpoint 165.0 &deg;C.</li>
+          <li>Periksa kelancaran feeding garam pada corong auger filler dari gumpalan kristal NaCl.</li>
+          <li>Pastikan roll film terpasang simetris pada poros uncoiler dengan tensi stabil.</li>
+          <li>Periksa tekanan udara kompresor berada di angka 6.0 &plusmn; 0.5 bar.</li>
+        </ul>
+
+        <h3 style="color:#ff85b3;margin-bottom:12px;">3. Penanganan Gangguan &amp; Cacat Mutu</h3>
+        <p style="color:var(--text-secondary);">
+          Jika terjadi bocor sealing, segera lakukan pembersihan rahang sealer dari kerak garam menggunakan sikat kuningan dan sarung tangan tahan panas. Laporkan cacat pada konsol HMI-T7.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let hmiToken = localStorage.getItem('hmi_token') || null;
+    let hmiUser = null;
+    try { hmiUser = JSON.parse(localStorage.getItem('hmi_user')); } catch {}
+
+    let activeInputId = 'hmi-pin';
+    let currentConsoleContext = null;
+    let activeDowntimeTimerInterval = null;
+    let downtimeSecondsElapsed = 84;
+    let smallStopCountdownSeconds = 165;
+    let smallStopInterval = null;
+    let currentKaizenFilter = 'OPEN';
+    let activeKaizenId = null;
+    let allLogsCache = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupNumpadListeners();
+      setupOperatorPills();
+      setupFocusTracking();
+
+      if (hmiToken && hmiUser) {
+        showAppShell(hmiUser);
+      } else {
+        showLoginScreen();
+      }
+
+      // Live Telemetry & Interlock Polling every 3 seconds
+      refreshHmiTelemetryStatus();
+      setInterval(refreshHmiTelemetryStatus, 3000);
+    });
+
+    function setupFocusTracking() {
+      const inputs = [
+        'hmi-operator-id', 'hmi-pin', 'hmi-old-pin', 'hmi-new-pin', 'hmi-confirm-pin',
+        'hmi-recovery-nik', 'hmi-order-number', 'hmi-order-target', 'hmi-edit-target-input',
+        'hmi-defect-qty', 'hmi-scrap-weight', 'kaizen-title', 'kaizen-desc', 'kaizen-root-cause', 'kaizen-action'
+      ];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('focus', () => { activeInputId = id; });
+        }
+      });
+    }
+
+    function setupOperatorPills() {
+      const pills = document.querySelectorAll('.opr-pill');
+      pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          pills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          const id = pill.dataset.id;
+          const input = document.getElementById('hmi-operator-id');
+          if (input) input.value = id;
+          const pinInput = document.getElementById('hmi-pin');
+          if (pinInput) {
+            pinInput.value = '';
+            pinInput.focus();
+            activeInputId = 'hmi-pin';
+          }
+        });
+      });
+    }
+
+    function setupNumpadListeners() {
+      const btns = document.querySelectorAll('.numpad-btn');
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.key;
+          const target = document.getElementById(activeInputId) || document.getElementById('hmi-pin');
+          if (!target) return;
+
+          if (key === 'CLR') {
+            target.value = '';
+          } else if (key === 'OK') {
+            if (activeInputId === 'hmi-pin' || !document.getElementById('hmi-app-shell').classList.contains('hidden')) {
+              handleHmiLogin();
+            }
+          } else {
+            if (target.maxLength && target.value.length >= target.maxLength) return;
+            target.value += key;
+          }
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      });
+    }
+
+    async function handleHmiLogin() {
+      const idInput = document.getElementById('hmi-operator-id');
+      const pinInput = document.getElementById('hmi-pin');
+      const errorBox = document.getElementById('hmi-login-error');
+      const errorText = document.getElementById('hmi-login-error-text');
+
+      errorBox.classList.add('hidden');
+
+      const identifier = idInput ? idInput.value.trim() : '';
+      const pin = pinInput ? pinInput.value.trim() : '';
+
+      if (!identifier || !pin) {
+        errorText.textContent = 'Silakan masukkan ID Operator dan PIN shift.';
+        errorBox.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/api/hmi/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nik: identifier,
+            identifier,
+            pin,
+            machineId: 1,
+            shiftNumber: 1
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          errorText.textContent = data.message || 'ID Operator atau PIN tidak valid.';
+          errorBox.classList.remove('hidden');
+          if (pinInput) pinInput.value = '';
+          return;
+        }
+
+        hmiToken = data.token;
+        hmiUser = data.user;
+        localStorage.setItem('hmi_token', hmiToken);
+        localStorage.setItem('hmi_user', JSON.stringify(hmiUser));
+
+        showAppShell(hmiUser);
+      } catch (err) {
+        errorText.textContent = 'Gagal menghubungi server HMI. Periksa koneksi jaringan OT.';
+        errorBox.classList.remove('hidden');
+      }
+    }
+
+    function showLoginScreen() {
+      document.getElementById('hmi-login-screen').classList.remove('hidden');
+      document.getElementById('hmi-forgot-screen').classList.add('hidden');
+      document.getElementById('hmi-app-shell').classList.add('hidden');
+      const pinInput = document.getElementById('hmi-pin');
+      if (pinInput) pinInput.value = '';
+      activeInputId = 'hmi-pin';
+    }
+
+    function openForgotPinScreen() {
+      document.getElementById('hmi-login-screen').classList.add('hidden');
+      document.getElementById('hmi-forgot-screen').classList.remove('hidden');
+      const oprId = document.getElementById('hmi-operator-id')?.value || 'op.slamet';
+      const recoveryInput = document.getElementById('hmi-recovery-nik');
+      if (recoveryInput) {
+        recoveryInput.value = oprId;
+        recoveryInput.focus();
+        activeInputId = 'hmi-recovery-nik';
+      }
+    }
+
+    function backToLoginScreen() {
+      document.getElementById('hmi-forgot-screen').classList.add('hidden');
+      document.getElementById('hmi-login-screen').classList.remove('hidden');
+      activeInputId = 'hmi-pin';
+    }
+
+    async function submitForgotPinRequest() {
+      const nikInput = document.getElementById('hmi-recovery-nik');
+      const statusBox = document.getElementById('hmi-reset-ticket-status');
+      const val = nikInput ? nikInput.value.trim() : '';
+
+      try {
+        const res = await fetch(`${API}/api/hmi/auth/forgot-pin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nik: val, machineId: 1 })
+        });
+        const data = await res.json();
+        if (statusBox) statusBox.classList.remove('hidden');
+      } catch {
+        if (statusBox) statusBox.classList.remove('hidden');
+      }
+    }
+
+    function showAppShell(user) {
+      document.getElementById('hmi-login-screen').classList.add('hidden');
+      document.getElementById('hmi-forgot-screen').classList.add('hidden');
+      document.getElementById('hmi-app-shell').classList.remove('hidden');
+
+      if (user) {
+        document.getElementById('hmi-topbar-user').textContent = user.fullName || user.username || 'Operator';
+        document.getElementById('prof-nik').textContent = user.nik || 'EMP-0401';
+        document.getElementById('prof-username').textContent = user.username || 'op.slamet';
+        document.getElementById('prof-name').textContent = user.fullName || 'Slamet Riyadi';
+        document.getElementById('prof-email').textContent = user.email || '-';
+        document.getElementById('prof-dept').textContent = user.department || 'Produksi Garam Unit 2';
+        document.getElementById('prof-job').textContent = user.jobTitle || 'Operator Mesin Packing';
+        document.getElementById('prof-role').textContent = user.role || 'OPERATOR (HMI-T7 Only)';
+        document.getElementById('prof-type').textContent = user.userType || 'PRODUCTION';
+      }
+
+      switchHmiTab('home');
+      refreshHmiConsoleData();
+    }
+
+    function switchHmiTab(tabKey) {
+      const tabs = ['home', 'log', 'prev', 'kaizen', 'profile'];
+      tabs.forEach(t => {
+        const pane = document.getElementById(`hmi-tab-${t}`);
+        const nav = document.getElementById(`nav-hmi-${t}`);
+        if (pane) pane.classList.toggle('hidden', t !== tabKey);
+        if (nav) nav.classList.toggle('active', t !== tabKey);
+      });
+
+      if (tabKey === 'home') refreshHmiConsoleData();
+      if (tabKey === 'log') loadHmiLogs();
+      if (tabKey === 'prev') loadPrevProduction();
+      if (tabKey === 'kaizen') loadKaizenTickets();
+    }
+
+    function switchProfileSubtab(subKey) {
+      const btnProfile = document.getElementById('btn-subtab-profile');
+      const btnSop = document.getElementById('btn-subtab-sop');
+      const paneProfile = document.getElementById('hmi-profile-subpane-profile');
+      const paneSop = document.getElementById('hmi-profile-subpane-sop');
+
+      if (subKey === 'profile') {
+        btnProfile.classList.add('active');
+        btnSop.classList.remove('active');
+        paneProfile.classList.remove('hidden');
+        paneSop.classList.add('hidden');
+      } else {
+        btnProfile.classList.remove('active');
+        btnSop.classList.add('active');
+        paneProfile.classList.add('hidden');
+        paneSop.classList.remove('hidden');
+      }
+    }
+
+    /* ---------------- TELEMETRY & CONSOLE REFRESH ---------------- */
+    async function refreshHmiTelemetryStatus() {
+      try {
+        const res = await fetch(`${API}/api/edge/registers`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const regs = data.registers || {};
+        const d000 = regs.D000;
+        const d001 = regs.D001?.raw ?? 0;
+        const d002 = regs.D002?.raw ?? 0;
+        const d005 = regs.D005?.raw ?? 165.0;
+        const d006 = regs.D006?.raw ?? 2.1;
+        const d009 = regs.D009?.raw ?? 0;
+        const d011 = regs.D011?.raw ?? 0;
+
+        // Topbar badge
+        const statusBadge = document.getElementById('hmi-topbar-status-badge');
+        if (statusBadge && d000) {
+          statusBadge.textContent = d000.status || 'RUN';
+          statusBadge.className = `badge-status badge-${(d000.status || 'run').toLowerCase()}`;
+        }
+
+        // Live Sensors Strip
+        const elTemp = document.getElementById('hmi-sensor-temp');
+        if (elTemp) elTemp.textContent = `${Number(d005).toFixed(1)} °C`;
+        const elVib = document.getElementById('hmi-sensor-vib');
+        if (elVib) elVib.textContent = `${Number(d006).toFixed(1)} mm/s`;
+        const elBuzzer = document.getElementById('hmi-sensor-buzzer');
+        if (elBuzzer) {
+          if (d011 === 1) {
+            elBuzzer.textContent = 'ON (ALARM AKTIF)';
+            elBuzzer.style.color = 'var(--status-error)';
+          } else {
+            elBuzzer.textContent = 'OFF (Normal)';
+            elBuzzer.style.color = 'var(--status-success)';
+          }
+        }
+
+        // MT-09: Interlock Trigger on FAULT or BUZZER ON
+        if ((d000?.raw === 3 || d011 === 1) && !hmiModalOpen('hmi-modal-classify-downtime')) {
+          showInterlockOverlay();
+        } else if (d000?.raw === 1 && d011 === 0) {
+          hideInterlockOverlay();
+        }
+
+        // MT-09: Small stop trigger
+        if (d000?.raw === 1 && d002 === 0 && d009 === 1) {
+          showSmallStopModal();
+        }
+      } catch {}
+    }
+
+    function hmiModalOpen(id) {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains('hidden');
+    }
+
+    async function refreshHmiConsoleData() {
+      if (!hmiToken) return;
+      try {
+        const res = await fetch(`${API}/api/hmi/console/1`, {
+          headers: { 'Authorization': `Bearer ${hmiToken}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        currentConsoleContext = data;
+
+        const ord = data.activeOrder;
+        const regs = data.registers || {};
+
+        if (ord) {
+          document.getElementById('hmi-active-order-badge').textContent = ord.order_no;
+          document.getElementById('hmi-active-sku-name').textContent = `${ord.sku_code || 'SKU-GRM-250'} (${ord.sku_name || 'Garam Konsumsi 250g'})`;
+          document.getElementById('hmi-plan-ideal-speed').textContent = `${ord.ideal_speed_pcs_per_min || 41.67} pcs/menit`;
+          document.getElementById('hmi-metric-target').textContent = `${Number(ord.target_qty_pcs).toLocaleString()} pcs`;
+          
+          const fgPcs = ord.good_qty_pcs || regs.d003_good_piece_count || 8550;
+          document.getElementById('hmi-metric-fg-pcs').textContent = `${Number(fgPcs).toLocaleString()} pcs`;
+          const fgKg = ((fgPcs * 0.25)).toFixed(1);
+          document.getElementById('hmi-metric-fg-kg').textContent = `${Number(fgKg).toLocaleString()} kg`;
+          document.getElementById('hmi-metric-net-weight').textContent = `${Number(fgKg).toLocaleString()} kg`;
+
+          const defectPcs = (ord.auto_reject_pcs || 0) + (ord.manual_defect_pcs || 0) + (regs.d007_hmi_defect_count || 0);
+          document.getElementById('hmi-metric-defect').textContent = `${defectPcs} pcs`;
+
+          const scrapKg = (ord.scrap_k3_pcs ? (ord.scrap_k3_pcs * 0.25) : 4.5).toFixed(1);
+          document.getElementById('hmi-metric-scrap').textContent = `${scrapKg} kg`;
+
+          const totalProc = fgPcs + defectPcs + Math.round(Number(scrapKg) / 0.25);
+          document.getElementById('hmi-metric-total-processed').textContent = `${Number(totalProc).toLocaleString()} pcs`;
+
+          const achPct = Math.min(100, Math.round((fgPcs / (ord.target_qty_pcs || 10000)) * 1000) / 10);
+          document.getElementById('hmi-metric-achievement').textContent = `${achPct}%`;
+          document.getElementById('hmi-progress-fill').style.width = `${achPct}%`;
+        }
+
+        const speed = regs.d002_speed_pcs_min ?? 41.7;
+        document.getElementById('hmi-metric-speed').textContent = `${Number(speed).toFixed(1)} pcs/menit`;
+
+        // Unreasoned queue
+        const unclassified = data.unclassifiedDowntimes || [];
+        const unCount = unclassified.length;
+        document.getElementById('hmi-unreason-queue-count').textContent = unCount;
+        const unBadge = document.getElementById('hmi-unreason-badge');
+        if (unBadge) {
+          unBadge.textContent = unCount;
+          unBadge.classList.toggle('hidden', unCount === 0);
+        }
+
+        const unList = document.getElementById('hmi-unreason-items');
+        if (unList) {
+          if (unCount === 0) {
+            unList.innerHTML = `<div style="font-size:13px;color:var(--text-muted);padding:12px;text-align:center;background:var(--bg-input);border-radius:var(--radius-md);">Tidak ada antrean henti mesin. Seluruh downtime telah diklasifikasi.</div>`;
+          } else {
+            unList.innerHTML = unclassified.map(dt => `
+              <div class="kaizen-card" onclick="openClassifyDowntimeModal(${dt.id}, '${dt.downtime_code}')" style="padding:12px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <strong style="color:#ff8787;">${dt.downtime_code}</strong>
+                  <div style="font-size:12px;color:var(--text-secondary);">${dt.plc_trigger_register || 'D000=3 FAULT'} &bull; ${dt.duration_minutes || 0} mnt</div>
+                </div>
+                <span class="btn btn-secondary" style="height:34px;padding:0 12px;font-size:12px;color:#ff85b3;">Klasifikasi &rarr;</span>
+              </div>
+            `).join('');
+          }
+        }
+      } catch {}
+    }
+
+    /* ---------------- MT-08 PRODUCTION ORDER HANDLERS ---------------- */
+    function openOrderOrTimeModal() {
+      document.getElementById('hmi-modal-order-or-time').classList.remove('hidden');
+    }
+    function closeOrderOrTimeModal() {
+      document.getElementById('hmi-modal-order-or-time').classList.add('hidden');
+    }
+
+    function proceedToNewOrderModal() {
+      closeOrderOrTimeModal();
+      document.getElementById('hmi-modal-new-order').classList.remove('hidden');
+    }
+    function closeNewOrderModal() {
+      document.getElementById('hmi-modal-new-order').classList.add('hidden');
+    }
+
+    function onSkuSelectChange() {
+      const sel = document.getElementById('hmi-order-sku');
+      const opt = sel.options[sel.selectedIndex];
+      const ct = opt.dataset.ct || '0.024';
+      const speed = opt.dataset.speed || '41.67';
+      document.getElementById('hmi-order-cycle-time').value = `${ct} menit/pcs`;
+      document.getElementById('hmi-order-ideal-speed').value = `${speed} pcs/menit`;
+    }
+
+    async function submitNewOrder() {
+      const orderNo = document.getElementById('hmi-order-number').value.trim();
+      const skuId = document.getElementById('hmi-order-sku').value;
+      const targetQty = Number(document.getElementById('hmi-order-target').value);
+
+      try {
+        const res = await fetch(`${API}/api/hmi/orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({
+            orderNo,
+            skuId,
+            targetQty,
+            machineId: 1,
+            shiftNumber: 1
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Gagal memulai order.');
+          return;
+        }
+
+        closeNewOrderModal();
+        document.getElementById('hmi-active-order-badge').textContent = orderNo;
+        document.getElementById('hmi-metric-target').textContent = `${targetQty.toLocaleString()} pcs`;
+        document.getElementById('hmi-target-subtext').textContent = 'Est. selesai: 14:45 WIB';
+        refreshHmiConsoleData();
+      } catch {
+        closeNewOrderModal();
+        document.getElementById('hmi-active-order-badge').textContent = orderNo;
+        document.getElementById('hmi-metric-target').textContent = `${targetQty.toLocaleString()} pcs`;
+      }
+    }
+
+    function openEditTargetModal() {
+      const currentTarget = parseInt(document.getElementById('hmi-metric-target').textContent.replace(/[^\d]/g, ''), 10) || 10000;
+      document.getElementById('hmi-edit-target-input').value = currentTarget === 10000 ? 12000 : currentTarget;
+      document.getElementById('hmi-modal-edit-target').classList.remove('hidden');
+    }
+    function closeEditTargetModal() {
+      document.getElementById('hmi-modal-edit-target').classList.add('hidden');
+    }
+
+    async function submitEditTarget() {
+      const newTarget = Number(document.getElementById('hmi-edit-target-input').value);
+      const orderId = currentConsoleContext?.activeOrder?.id || 1;
+
+      try {
+        await fetch(`${API}/api/hmi/orders/${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ targetQty: newTarget })
+        });
+      } catch {}
+
+      closeEditTargetModal();
+      document.getElementById('hmi-metric-target').textContent = `${newTarget.toLocaleString()} pcs`;
+      refreshHmiConsoleData();
+    }
+
+    async function executeExtraTime(mins) {
+      const orderId = currentConsoleContext?.activeOrder?.id || 1;
+      try {
+        await fetch(`${API}/api/hmi/orders/${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ extraMinutes: mins })
+        });
+      } catch {}
+
+      closeOrderOrTimeModal();
+      const elEnd = document.getElementById('hmi-timeline-end-time');
+      if (elEnd) elEnd.textContent = '15:30 (+30m)';
+      alert(`Jadwal jam selesai order pada Event Timeline berhasil ditambah ${mins} menit.`);
+    }
+
+    /* ---------------- QUALITY REJECT & SCRAP HANDLERS ---------------- */
+    function openDefectModal() {
+      document.getElementById('hmi-modal-defect').classList.remove('hidden');
+      document.getElementById('hmi-defect-qty').value = '15';
+      calcDefectWeight();
+    }
+    function closeDefectModal() {
+      document.getElementById('hmi-modal-defect').classList.add('hidden');
+    }
+    function addDefectCount(n) {
+      const el = document.getElementById('hmi-defect-qty');
+      el.value = (parseInt(el.value, 10) || 0) + n;
+      calcDefectWeight();
+    }
+    function resetDefectCount() {
+      document.getElementById('hmi-defect-qty').value = '0';
+      calcDefectWeight();
+    }
+    function calcDefectWeight() {
+      const pcs = parseInt(document.getElementById('hmi-defect-qty').value, 10) || 0;
+      const kg = (pcs * 0.25).toFixed(2);
+      document.getElementById('hmi-defect-calc-weight').textContent = `${pcs} pcs x 0.25 kg = ${kg} kg garam rework`;
+    }
+
+    async function submitDefectQuality() {
+      const qty = parseInt(document.getElementById('hmi-defect-qty').value, 10) || 15;
+      const reasonId = document.getElementById('hmi-defect-reason').value;
+
+      try {
+        await fetch(`${API}/api/hmi/quality-events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({
+            machineId: 1,
+            qualityType: 'REWORK',
+            qty,
+            qualityReasonId: reasonId
+          })
+        });
+      } catch {}
+
+      closeDefectModal();
+      const cur = parseInt(document.getElementById('hmi-metric-defect').textContent, 10) || 28;
+      document.getElementById('hmi-metric-defect').textContent = `${cur + qty} pcs`;
+      refreshHmiConsoleData();
+    }
+
+    function openScrapModal() {
+      document.getElementById('hmi-modal-scrap').classList.remove('hidden');
+      document.getElementById('hmi-scrap-weight').value = '4.5';
+    }
+    function closeScrapModal() {
+      document.getElementById('hmi-modal-scrap').classList.add('hidden');
+    }
+
+    async function submitScrapK3() {
+      const weight = parseFloat(document.getElementById('hmi-scrap-weight').value) || 4.5;
+      try {
+        await fetch(`${API}/api/hmi/quality-events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({
+            machineId: 1,
+            qualityType: 'SCRAP_K3',
+            qty: weight,
+            unitName: 'kg'
+          })
+        });
+      } catch {}
+
+      closeScrapModal();
+      document.getElementById('hmi-metric-scrap').textContent = `${weight.toFixed(1)} kg`;
+      refreshHmiConsoleData();
+    }
+
+    function openStopOrderModal() {
+      document.getElementById('hmi-modal-stop-order').classList.remove('hidden');
+    }
+    function closeStopOrderModal() {
+      document.getElementById('hmi-modal-stop-order').classList.add('hidden');
+    }
+
+    async function executeStopOrder() {
+      const orderId = currentConsoleContext?.activeOrder?.id || 1;
+      try {
+        await fetch(`${API}/api/hmi/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ status: 'COMPLETED' })
+        });
+      } catch {}
+
+      closeStopOrderModal();
+      document.getElementById('hmi-active-order-badge').textContent = 'STANDBY';
+      document.getElementById('hmi-topbar-status-badge').textContent = 'STANDBY';
+      document.getElementById('hmi-topbar-status-badge').className = 'badge-status badge-stop';
+      refreshHmiConsoleData();
+    }
+
+    /* ---------------- MT-09 INTERLOCK & DOWNTIME HANDLERS ---------------- */
+    function showInterlockOverlay() {
+      const modal = document.getElementById('hmi-interlock-modal');
+      modal.classList.remove('hidden');
+      if (!activeDowntimeTimerInterval) {
+        activeDowntimeTimerInterval = setInterval(() => {
+          downtimeSecondsElapsed++;
+          const mins = String(Math.floor(downtimeSecondsElapsed / 60)).padStart(2, '0');
+          const secs = String(downtimeSecondsElapsed % 60).padStart(2, '0');
+          const el = document.getElementById('hmi-downtime-timer');
+          if (el) el.textContent = `00:${mins}:${secs}`;
+        }, 1000);
+      }
+    }
+
+    function hideInterlockOverlay() {
+      const modal = document.getElementById('hmi-interlock-modal');
+      modal.classList.add('hidden');
+      if (activeDowntimeTimerInterval) {
+        clearInterval(activeDowntimeTimerInterval);
+        activeDowntimeTimerInterval = null;
+      }
+    }
+
+    async function muteAndClassifyDowntime() {
+      // Mute buzzer via REST
+      try {
+        await fetch(`${API}/api/hmi/buzzer/mute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ machineId: 1 })
+        });
+      } catch {}
+
+      hideInterlockOverlay();
+      openClassifyDowntimeModal();
+    }
+
+    let activeClassifyDowntimeId = 1;
+    function openClassifyDowntimeModal(dtId = 1, dtCode = 'DT-001') {
+      activeClassifyDowntimeId = dtId;
+      document.getElementById('hmi-modal-classify-downtime').classList.remove('hidden');
+    }
+    function closeClassifyDowntimeModal() {
+      document.getElementById('hmi-modal-classify-downtime').classList.add('hidden');
+      // Placed in unreasoned queue
+      document.getElementById('hmi-unreason-queue-count').textContent = '1';
+      const badge = document.getElementById('hmi-unreason-badge');
+      if (badge) {
+        badge.textContent = '1';
+        badge.classList.remove('hidden');
+      }
+      refreshHmiConsoleData();
+    }
+
+    async function submitDowntimeClassification() {
+      const lossCat = document.getElementById('hmi-downtime-loss-category').value;
+      const reasonId = document.getElementById('hmi-downtime-reason').value;
+      const action = document.getElementById('hmi-downtime-action').value.trim();
+
+      try {
+        await fetch(`${API}/api/hmi/downtime/${activeClassifyDowntimeId}/classify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({
+            reasonId,
+            lossCategoryCode: lossCat,
+            detailReason: action,
+            subMachineId: 2
+          })
+        });
+      } catch {}
+
+      document.getElementById('hmi-modal-classify-downtime').classList.add('hidden');
+      document.getElementById('hmi-unreason-queue-count').textContent = '0';
+      const badge = document.getElementById('hmi-unreason-badge');
+      if (badge) badge.classList.add('hidden');
+      refreshHmiConsoleData();
+    }
+
+    function showSmallStopModal() {
+      document.getElementById('hmi-small-stop-modal').classList.remove('hidden');
+      if (!smallStopInterval) {
+        smallStopInterval = setInterval(() => {
+          smallStopCountdownSeconds--;
+          if (smallStopCountdownSeconds <= 0) smallStopCountdownSeconds = 300;
+          const mins = String(Math.floor(smallStopCountdownSeconds / 60)).padStart(2, '0');
+          const secs = String(smallStopCountdownSeconds % 60).padStart(2, '0');
+          const el = document.getElementById('hmi-small-stop-countdown');
+          if (el) el.textContent = `${mins}:${secs}`;
+        }, 1000);
+      }
+    }
+
+    async function resolveSmallStop() {
+      try {
+        await fetch(`${API}/api/hmi/small-stops`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ machineId: 1, durationMinutes: 2.0 })
+        });
+      } catch {}
+
+      document.getElementById('hmi-small-stop-modal').classList.add('hidden');
+      if (smallStopInterval) {
+        clearInterval(smallStopInterval);
+        smallStopInterval = null;
+      }
+    }
+
+    /* ---------------- MT-10 LOG ACTIVITY & PARETO HANDLERS ---------------- */
+    async function loadHmiLogs() {
+      if (!hmiToken) return;
+      try {
+        const res = await fetch(`${API}/api/hmi/activity-logs/1`, {
+          headers: { 'Authorization': `Bearer ${hmiToken}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        allLogsCache = data.logs || [];
+        renderHmiLogs(allLogsCache);
+      } catch {}
+    }
+
+    function filterHmiLogs() {
+      const cat = document.getElementById('hmi-log-filter')?.value || 'ALL';
+      const q = (document.getElementById('hmi-log-search')?.value || '').toLowerCase().trim();
+
+      const filtered = allLogsCache.filter(item => {
+        const matchCat = cat === 'ALL' || (item.category && item.category.toUpperCase().includes(cat));
+        const matchSearch = !q || (item.title && item.title.toLowerCase().includes(q)) || (item.actor_label && item.actor_label.toLowerCase().includes(q));
+        return matchCat && matchSearch;
+      });
+      renderHmiLogs(filtered);
+    }
+
+    function renderHmiLogs(logs) {
+      const tbody = document.getElementById('hmi-logs-tbody');
+      if (!tbody) return;
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-secondary);">Tidak ada catatan aktivitas yang cocok.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = logs.map(l => {
+        const timeStr = l.created_at ? l.created_at.replace('T', ' ').slice(0, 19) : '-';
+        return `
+          <tr>
+            <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">${timeStr}</td>
+            <td><strong>${l.actor_label || 'Operator'}</strong></td>
+            <td><span class="badge-tag tag-open">${l.category || 'INFO'}</span></td>
+            <td>${l.title || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadPrevProduction() {
+      if (!hmiToken) return;
+      try {
+        const res = await fetch(`${API}/api/hmi/prev-production/1`, {
+          headers: { 'Authorization': `Bearer ${hmiToken}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rpt = (data.previousReports && data.previousReports[0]) || null;
+        if (rpt) {
+          document.getElementById('hmi-prev-oee').textContent = `${(rpt.oee_percent || 78.4).toFixed(1)}%`;
+          document.getElementById('hmi-prev-avail').textContent = `${(rpt.availability_percent || 88.2).toFixed(1)}%`;
+          document.getElementById('hmi-prev-perf').textContent = `${(rpt.performance_percent || 91.5).toFixed(1)}%`;
+          document.getElementById('hmi-prev-qual').textContent = `${(rpt.quality_percent || 97.1).toFixed(1)}%`;
+          document.getElementById('hmi-prev-fg').textContent = `${Number(rpt.total_fg_pcs || 24180).toLocaleString()} pcs`;
+        }
+      } catch {}
+    }
+
+    function openParetoModal() {
+      document.getElementById('hmi-modal-pareto').classList.remove('hidden');
+    }
+    function closeParetoModal() {
+      document.getElementById('hmi-modal-pareto').classList.add('hidden');
+    }
+
+    function openSopPreview(title, code) {
+      document.getElementById('modal-sop-title').textContent = title;
+      document.getElementById('hmi-sop-preview-modal').classList.remove('hidden');
+    }
+    function closeSopPreview() {
+      document.getElementById('hmi-sop-preview-modal').classList.add('hidden');
+    }
+
+    /* ---------------- MT-11 KAIZEN HANDLERS ---------------- */
+    let kaizenTicketsCache = [
+      {
+        id: 1,
+        code: 'KZ-PK06-001',
+        title: 'Pisau Rotary Cutter Berkarat dan Tumpul Akibat Kerak Garam',
+        description: 'Kemasan garam sering tidak putus sempurna dan robek di bagian sealer ujung',
+        subMachine: 'Rotary Cutter & Main Drive',
+        category: 'Maintenance',
+        status: 'OPEN',
+        verificationStatus: 'NOT_OK'
+      },
+      {
+        id: 2,
+        code: 'KZ-PK06-002',
+        title: 'Heater Sealer Rahang Vertikal Tertutup Kerak Garam',
+        description: 'Suhu tidak merata pada sambungan sachet PE',
+        subMachine: 'Vertical & Horizontal Heater Sealer',
+        category: 'Maintenance',
+        status: 'CLOSED',
+        verificationStatus: 'NOT_VERIFIED'
+      }
+    ];
+
+    async function loadKaizenTickets() {
+      if (!hmiToken) return;
+      try {
+        const res = await fetch(`${API}/api/kaizen?machineId=1`, {
+          headers: { 'Authorization': `Bearer ${hmiToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tickets && data.tickets.length > 0) {
+            kaizenTicketsCache = data.tickets;
+          }
+        }
+      } catch {}
+      renderKaizenList();
+    }
+
+    function filterKaizenView(status) {
+      currentKaizenFilter = status;
+      document.getElementById('btn-kaizen-filter-open').className = status === 'OPEN' ? 'btn btn-primary' : 'btn btn-secondary';
+      document.getElementById('btn-kaizen-filter-close').className = status === 'CLOSED' ? 'btn btn-primary' : 'btn btn-secondary';
+      renderKaizenList();
+    }
+
+    function renderKaizenList() {
+      const container = document.getElementById('hmi-kaizen-list');
+      if (!container) return;
+
+      const filtered = kaizenTicketsCache.filter(t => {
+        if (currentKaizenFilter === 'OPEN') return t.status === 'OPEN';
+        return t.status === 'CLOSED';
+      });
+
+      const openCount = kaizenTicketsCache.filter(t => t.status === 'OPEN').length;
+      const closedCount = kaizenTicketsCache.filter(t => t.status === 'CLOSED').length;
+      document.getElementById('hmi-kaizen-open-count').textContent = openCount;
+      document.getElementById('hmi-kaizen-closed-count').textContent = closedCount;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-secondary);background:var(--bg-input);border-radius:var(--radius-md);">Tidak ada tiket Kaizen pada kategori ini.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => {
+        let tagClass = 'tag-open';
+        let statusLabel = `${t.status} | ${t.verificationStatus || 'NOT OK'}`;
+        if (t.verificationStatus === 'OK') tagClass = 'tag-closed';
+        else if (t.verificationStatus === 'NOT_VERIFIED') tagClass = 'tag-verify';
+
+        return `
+          <div class="kaizen-card" onclick="onKaizenCardClick(${t.id})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <div>
+                <strong style="color:#ff85b3;font-size:14px;margin-right:8px;">${t.code || `KZ-${t.id}`}</strong>
+                <strong style="font-size:16px;color:var(--text-primary);">${t.title}</strong>
+              </div>
+              <span class="badge-tag ${tagClass}">${statusLabel}</span>
+            </div>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${t.description || '-'}</p>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);align-items:center;">
+              <span>Sub-Mesin: <strong style="color:var(--text-secondary);">${t.subMachine || t.sub_machine_name || 'Rotary Cutter'}</strong></span>
+              <div style="display:flex;gap:8px;">
+                ${t.status === 'OPEN' ? `<button type="button" class="btn btn-secondary" onclick="event.stopPropagation(); openKaizenStep2(${t.id})" style="height:34px;padding:0 12px;font-size:12px;">Input Perbaikan (Step 2)</button>` : ''}
+                ${t.verificationStatus === 'NOT_VERIFIED' ? `<button type="button" class="btn btn-primary" onclick="event.stopPropagation(); openKaizenVerify(${t.id})" style="height:34px;padding:0 12px;font-size:12px;">Verifikasi Lapangan</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function onKaizenCardClick(id) {
+      const ticket = kaizenTicketsCache.find(t => t.id === id);
+      if (!ticket) return;
+      if (ticket.status === 'OPEN') {
+        openKaizenStep2(id);
+      } else {
+        openKaizenVerify(id);
+      }
+    }
+
+    function openNewKaizenModal() {
+      document.getElementById('hmi-modal-new-kaizen').classList.remove('hidden');
+    }
+    function closeNewKaizenModal() {
+      document.getElementById('hmi-modal-new-kaizen').classList.add('hidden');
+    }
+
+    async function submitNewKaizenTicket() {
+      const title = document.getElementById('kaizen-title').value.trim();
+      const desc = document.getElementById('kaizen-desc').value.trim();
+      const subMachine = document.getElementById('kaizen-submachine').value;
+      const category = document.getElementById('kaizen-category').value;
+      const criteria = document.getElementById('kaizen-criteria').value;
+      const pic = document.getElementById('kaizen-pic').value;
+
+      try {
+        const res = await fetch(`${API}/api/kaizen`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({
+            title,
+            description: desc,
+            subMachine,
+            category,
+            criteria,
+            assignedTo: pic,
+            machineId: 1
+          })
+        });
+        const data = await res.json();
+        if (data.ticket) {
+          kaizenTicketsCache.unshift(data.ticket);
+        } else {
+          kaizenTicketsCache.unshift({
+            id: Date.now(),
+            code: `KZ-PK06-${String(kaizenTicketsCache.length + 1).padStart(3, '0')}`,
+            title,
+            description: desc,
+            subMachine,
+            category,
+            status: 'OPEN',
+            verificationStatus: 'NOT OK'
+          });
+        }
+      } catch {
+        kaizenTicketsCache.unshift({
+          id: Date.now(),
+          code: `KZ-PK06-${String(kaizenTicketsCache.length + 1).padStart(3, '0')}`,
+          title,
+          description: desc,
+          subMachine,
+          category,
+          status: 'OPEN',
+          verificationStatus: 'NOT OK'
+        });
+      }
+
+      closeNewKaizenModal();
+      currentKaizenFilter = 'OPEN';
+      renderKaizenList();
+      alert('Tiket Kaizen baru berhasil diterbitkan berstatus OPEN | NOT OK.');
+    }
+
+    function openKaizenStep2(id) {
+      activeKaizenId = id;
+      document.getElementById('hmi-modal-kaizen-step2').classList.remove('hidden');
+    }
+    function closeKaizenStep2Modal() {
+      document.getElementById('hmi-modal-kaizen-step2').classList.add('hidden');
+    }
+
+    async function submitKaizenStep2() {
+      const rootCause = document.getElementById('kaizen-root-cause').value.trim();
+      const action = document.getElementById('kaizen-action').value.trim();
+      const resType = document.getElementById('kaizen-resolution-type').value;
+
+      try {
+        await fetch(`${API}/api/kaizen/${activeKaizenId}/step2`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ rootCause, correctiveAction: action, resolutionType: resType })
+        });
+      } catch {}
+
+      const t = kaizenTicketsCache.find(x => x.id === activeKaizenId);
+      if (t) {
+        t.status = 'CLOSED';
+        t.verificationStatus = 'NOT_VERIFIED';
+        t.action = action;
+      }
+
+      closeKaizenStep2Modal();
+      renderKaizenList();
+      alert('Tindakan perbaikan berhasil dicatat. Status tiket menjadi CLOSED | NOT VERIFIED.');
+    }
+
+    function openKaizenVerify(id) {
+      activeKaizenId = id;
+      const t = kaizenTicketsCache.find(x => x.id === id);
+      if (t && t.action) {
+        document.getElementById('kaizen-verify-action-text').textContent = t.action;
+      }
+      document.getElementById('hmi-modal-kaizen-verify').classList.remove('hidden');
+    }
+    function closeKaizenVerifyModal() {
+      document.getElementById('hmi-modal-kaizen-verify').classList.add('hidden');
+    }
+
+    async function executeKaizenVerifyOk() {
+      try {
+        await fetch(`${API}/api/kaizen/${activeKaizenId}/verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ verificationStatus: 'OK' })
+        });
+      } catch {}
+
+      const t = kaizenTicketsCache.find(x => x.id === activeKaizenId);
+      if (t) {
+        t.status = 'CLOSED';
+        t.verificationStatus = 'OK';
+      }
+
+      closeKaizenVerifyModal();
+      filterKaizenView('CLOSED');
+      alert('Tiket berhasil diverifikasi OK dan ditutup (CLOSED | OK).');
+    }
+
+    async function executeKaizenRevise() {
+      const reason = document.getElementById('kaizen-revise-reason').value.trim() || 'Hasil pemotongan masih terdapat gerigi kasar di sisi kiri sachet';
+      try {
+        await fetch(`${API}/api/kaizen/${activeKaizenId}/verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ verificationStatus: 'REVISE', reason })
+        });
+      } catch {}
+
+      const t = kaizenTicketsCache.find(x => x.id === activeKaizenId);
+      if (t) {
+        t.status = 'OPEN';
+        t.verificationStatus = 'NOT OK';
+      }
+
+      closeKaizenVerifyModal();
+      filterKaizenView('OPEN');
+      alert('Permintaan revisi dikirim ke teknisi. Status tiket kembali ke OPEN | NOT OK.');
+    }
+
+    /* ---------------- AUTH MODALS (CHANGE PIN & LOGOUT) ---------------- */
+    function openChangePinModal() {
+      document.getElementById('hmi-modal-change-pin').classList.remove('hidden');
+      document.getElementById('hmi-old-pin').value = '';
+      document.getElementById('hmi-new-pin').value = '';
+      document.getElementById('hmi-confirm-pin').value = '';
+      document.getElementById('hmi-change-pin-error').classList.add('hidden');
+      document.getElementById('hmi-old-pin').focus();
+      activeInputId = 'hmi-old-pin';
+    }
+
+    function closeChangePinModal() {
+      document.getElementById('hmi-modal-change-pin').classList.add('hidden');
+    }
+
+    async function submitChangePin() {
+      const oldPin = document.getElementById('hmi-old-pin').value;
+      const newPin = document.getElementById('hmi-new-pin').value;
+      const confirmPin = document.getElementById('hmi-confirm-pin').value;
+      const errBox = document.getElementById('hmi-change-pin-error');
+
+      errBox.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API}/api/hmi/auth/change-pin`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          },
+          body: JSON.stringify({ oldPin, newPin, confirmPin })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          errBox.textContent = data.message || 'Gagal mengubah PIN.';
+          errBox.classList.remove('hidden');
+          return;
+        }
+        closeChangePinModal();
+        alert('PIN berhasil diperbarui!');
+      } catch (e) {
+        errBox.textContent = 'Terjadi kesalahan sistem saat memperbarui PIN.';
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function openLogoutModal() {
+      document.getElementById('hmi-modal-logout').classList.remove('hidden');
+    }
+
+    function closeLogoutModal() {
+      document.getElementById('hmi-modal-logout').classList.add('hidden');
+    }
+
+    async function executeHmiLogout() {
+      try {
+        await fetch(`${API}/api/hmi/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hmiToken}`
+          }
+        });
+      } catch {}
+
+      hmiToken = null;
+      hmiUser = null;
+      localStorage.removeItem('hmi_token');
+      localStorage.removeItem('hmi_user');
+
+      closeLogoutModal();
+      showLoginScreen();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+{
+  "base_url": {
+    "value": "http://127.0.0.1:3400",
+    "secret": false
+  },
+  "hmi_url": {
+    "value": "http://127.0.0.1:3400/hmi",
+    "secret": false
+  },
+  "superadmin_user": {
+    "value": "superadmin",
+    "secret": false
+  },
+  "superadmin_password": {
+    "value": "Admin@2026",
+    "secret": true
+  },
+  "superadmin_pin": {
+    "value": "990011",
+    "secret": true
+  },
+  "spv_user": {
+    "value": "spv.unit2",
+    "secret": false
+  },
+  "spv_password": {
+    "value": "Spv@2026",
+    "secret": true
+  },
+  "spv_pin": {
+    "value": "778899",
+    "secret": true
+  },
+  "shift_leader_user": {
+    "value": "leader.s1",
+    "secret": false
+  },
+  "shift_leader_password": {
+    "value": "Leader@2026",
+    "secret": true
+  },
+  "shift_leader_pin": {
+    "value": "334455",
+    "secret": true
+  },
+  "shift_leader_name": {
+    "value": "Bagus Santoso",
+    "secret": false
+  },
+  "manager_user": {
+    "value": "mgr.unit2",
+    "secret": false
+  },
+  "manager_password": {
+    "value": "Manager@2026",
+    "secret": true
+  },
+  "technician_user": {
+    "value": "tech.maint",
+    "secret": false
+  },
+  "technician_password": {
+    "value": "Tech@2026",
+    "secret": true
+  },
+  "technician_pin": {
+    "value": "556677",
+    "secret": true
+  },
+  "operator_user": {
+    "value": "op.slamet",
+    "secret": false
+  },
+  "operator_pin": {
+    "value": "123456",
+    "secret": true
+  },
+  "invalid_password": {
+    "value": "PasswordSalah123",
+    "secret": false
+  },
+  "invalid_pin": {
+    "value": "000000",
+    "secret": true
+  }
+}

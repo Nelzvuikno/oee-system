@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "title": "Industrial Packing Machine OEE Benchmark Dataset",
+    "standard": "JIPM (Japan Institute of Plant Maintenance)",
+    "source": "Empirical Research Case Study - Unit 2 Packing Line (Teknika 2023)",
+    "anonymizedPlant": "Unit 2 Production Plant",
+    "anonymizedMachine": "PACK-UNIT-02",
+    "anonymizedController": "PLC-CTRL-01",
+    "ratedSpeedPacksPerMin": 60,
+    "totalObservedLoadingMinutes": 144180
+  },
+  "worldClassStandards": {
+    "availabilityTarget": 0.90,
+    "performanceTarget": 0.95,
+    "qualityTarget": 0.99,
+    "oeeTarget": 0.85
+  },
+  "monthlySummary": [
+    {
+      "month": "Juli 2022",
+      "loadingTimeMinutes": 28560,
+      "operatingTimeMinutes": 24502,
+      "availability": 0.8579,
+      "performance": 0.7716,
+      "quality": 0.9798,
+      "oee": 0.6486
+    },
+    {
+      "month": "Agustus 2022",
+      "loadingTimeMinutes": 29400,
+      "operatingTimeMinutes": 24540,
+      "availability": 0.8347,
+      "performance": 0.8371,
+      "quality": 0.9814,
+      "oee": 0.6858
+    },
+    {
+      "month": "September 2022",
+      "loadingTimeMinutes": 28840,
+      "operatingTimeMinutes": 24667,
+      "availability": 0.8553,
+      "performance": 0.7963,
+      "quality": 0.9805,
+      "oee": 0.6678
+    },
+    {
+      "month": "Oktober 2022",
+      "loadingTimeMinutes": 28980,
+      "operatingTimeMinutes": 25149,
+      "availability": 0.8678,
+      "performance": 0.8277,
+      "quality": 0.9790,
+      "oee": 0.7032
+    },
+    {
+      "month": "November 2022",
+      "loadingTimeMinutes": 28400,
+      "operatingTimeMinutes": 24901,
+      "availability": 0.8768,
+      "performance": 0.8088,
+      "quality": 0.9803,
+      "oee": 0.6952
+    }
+  ],
+  "aggregate5MonthMetrics": {
+    "averageAvailability": 0.8585,
+    "averagePerformance": 0.8083,
+    "averageQuality": 0.9802,
+    "averageOEE": 0.6801
+  },
+  "sixBigLossesDistribution": [
+    {
+      "code": "L-04",
+      "name": "Reduced Speed Losses",
+      "category": "Performance Loss",
+      "durationMinutes": 23776,
+      "percentageOfLoadingTime": 0.1647,
+      "paretoRank": 1
+    },
+    {
+      "code": "L-02",
+      "name": "Setup and Adjustment Losses",
+      "category": "Availability Loss",
+      "durationMinutes": 14366,
+      "percentageOfLoadingTime": 0.0997,
+      "paretoRank": 2
+    },
+    {
+      "code": "L-03",
+      "name": "Idle and Minor Stoppage Losses",
+      "category": "Performance Loss",
+      "durationMinutes": 13435,
+      "percentageOfLoadingTime": 0.0935,
+      "paretoRank": 3
+    },
+    {
+      "code": "L-01",
+      "name": "Equipment Failure Losses",
+      "category": "Availability Loss",
+      "durationMinutes": 6010,
+      "percentageOfLoadingTime": 0.0418,
+      "paretoRank": 4
+    },
+    {
+      "code": "L-05",
+      "name": "Process Defect Losses",
+      "category": "Quality Loss",
+      "durationMinutes": 1974,
+      "percentageOfLoadingTime": 0.0137,
+      "paretoRank": 5
+    },
+    {
+      "code": "L-06",
+      "name": "Scrap Losses",
+      "category": "Quality Loss",
+      "durationMinutes": 297,
+      "percentageOfLoadingTime": 0.0020,
+      "paretoRank": 6
+    }
+  ]
+}
+

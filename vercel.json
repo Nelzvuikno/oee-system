@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/api", "destination": "/api" },
+    { "source": "/hmi/(.*)", "destination": "/hmi.html" },
+    { "source": "/hmi", "destination": "/hmi.html" },
+    { "source": "/web/(.*)", "destination": "/index.html" },
+    { "source": "/web", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/forgot-password", "destination": "/index.html" },
+    { "source": "/", "destination": "/index.html" }
+  ]
+}

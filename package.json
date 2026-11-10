@@ -1,0 +1,16 @@
+{
+  "name": "productioncore-oee",
+  "version": "1.0.0",
+  "description": "ProductionCore OEE & TPM System for PT. XYZ Unit 2 Packing Line (Edge OT Rule Engine, Web Management Console, and Panel HMI-T7 Touch Console)",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "seed": "node --no-warnings db/seed.mjs",
+    "start": "node --no-warnings server/index.mjs",
+    "test": "node --no-warnings --test tests/*.test.mjs"
+  }
+}
+

@@ -1,0 +1,24 @@
+# Dependency & OS files
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Vercel & IDE
+.vercel
+.vscode/
+.idea/
+
+# SQLite WAL and lock files
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+
+# Test run caches
+tests/e2e/output-*/
+.testmuai/
+
+# Large reference PDFs and raw text dumps
+*.pdf
+*_extracted.txt
+feasibility.txt
+ildha_case.txt

@@ -1,0 +1,276 @@
+/* ==========================================================================
+   Blossom Design System — Design Tokens (web)
+   Layer 1: primitives (raw values)   Layer 2: semantic (what components use)
+   Components must only reference semantic tokens (--color-*), never primitives.
+   ========================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap");
+
+:root {
+  /* ---------- Primitives: Brand pink (given: 50, 200, 600) ---------- */
+  --pink-50:  #FFF5F8;
+  --pink-100: #FFE3EC;
+  --pink-200: #FFB6C1;
+  --pink-300: #FA8FAE;
+  --pink-400: #F06595;
+  --pink-500: #E64980;
+  --pink-600: #D6336C;   /* brand / primary */
+  --pink-700: #B82659;
+  --pink-800: #961E4A;
+  --pink-900: #701637;
+  --pink-950: #4A0E25;
+
+  /* ---------- Primitives: Accent (given: 500) ---------- */
+  --accent-50:  #FFF0F5;
+  --accent-100: #FFD9E6;
+  --accent-300: #FF80AB;
+  --accent-400: #FF669C;  /* accent hover: lighter, keeps dark label at 6.4:1 */
+  --accent-500: #FF4081;  /* accent / focus ring / highlights */
+  --accent-600: #F50057;
+  --accent-700: #C51162;
+
+  /* ---------- Primitives: Neutral (plum-tinted gray) ---------- */
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #FAF7F8;
+  --neutral-100: #F4EFF1;
+  --neutral-200: #E8E0E4;
+  --neutral-300: #D5CACF;
+  --neutral-400: #A99DA3;
+  --neutral-450: #9A8E94;   /* form-control borders: 3.15:1 on white (WCAG 1.4.11) */
+  --neutral-500: #7A6E74;
+  --neutral-600: #5F545A;
+  --neutral-700: #453C41;
+  --neutral-800: #2E272B;
+  --neutral-900: #1D181B;
+  --neutral-950: #130F11;
+
+  /* ---------- Primitives: Status ---------- */
+  --success-50: #EBFBEE; --success-200: #B2F2BB; --success-500: #2F9E44; --success-600: #278238; --success-700: #1E6B30;
+  --warning-50: #FFF9DB; --warning-200: #FFE066; --warning-500: #F59F00; --warning-600: #E67700; --warning-700: #7A4300;
+  --danger-50:  #FFF0F0; --danger-200:  #FFC9C9; --danger-500:  #E03131; --danger-600:  #C92A2A; --danger-700:  #A61E1E;
+  --info-50:    #E7F5FF; --info-200:    #A5D8FF; --info-500:    #1C7ED6; --info-600:    #1971C2; --info-700:    #145A9E;
+
+  /* ---------- Typography ---------- */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+
+  /* size / line-height pairs (rem, 1rem = 16px) */
+  --text-xs:   0.75rem;   --leading-xs:   1rem;
+  --text-sm:   0.875rem;  --leading-sm:   1.25rem;
+  --text-base: 1rem;      --leading-base: 1.5rem;
+  --text-lg:   1.125rem;  --leading-lg:   1.75rem;
+  --text-xl:   1.25rem;   --leading-xl:   1.75rem;
+  --text-2xl:  1.5rem;    --leading-2xl:  2rem;
+  --text-3xl:  1.875rem;  --leading-3xl:  2.25rem;
+  --text-4xl:  2.25rem;   --leading-4xl:  2.5rem;
+  --text-5xl:  3rem;      --leading-5xl:  3.25rem;
+  --text-6xl:  3.75rem;   --leading-6xl:  4rem;
+
+  --tracking-tighter: -0.03em;
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.04em;
+  --tracking-caps:     0.08em;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-0-5: 0.125rem;  /* 2  */
+  --space-1: 0.25rem;     /* 4  */
+  --space-1-5: 0.375rem;  /* 6  */
+  --space-2: 0.5rem;      /* 8  */
+  --space-3: 0.75rem;     /* 12 */
+  --space-4: 1rem;        /* 16 */
+  --space-5: 1.25rem;     /* 20 */
+  --space-6: 1.5rem;      /* 24 */
+  --space-8: 2rem;        /* 32 */
+  --space-10: 2.5rem;     /* 40 */
+  --space-12: 3rem;       /* 48 */
+  --space-16: 4rem;       /* 64 */
+  --space-20: 5rem;       /* 80 */
+  --space-24: 6rem;       /* 96 */
+
+  /* ---------- Radius ---------- */
+  --radius-none: 0;
+  --radius-xs: 0.25rem;   /* 4  chips, kbd, checkbox */
+  --radius-sm: 0.375rem;  /* 6  badges, small controls */
+  --radius-md: 0.5rem;    /* 8  buttons, inputs */
+  --radius-lg: 0.75rem;   /* 12 cards, alerts */
+  --radius-xl: 1rem;      /* 16 modals, large cards */
+  --radius-2xl: 1.5rem;   /* 24 hero surfaces */
+  --radius-full: 9999px;
+
+  /* ---------- Border ---------- */
+  --border-0: 0;
+  --border-1: 1px;
+  --border-2: 2px;
+  --border-4: 4px;
+
+  /* ---------- Shadow (plum-tinted, never pure black) ---------- */
+  --shadow-xs:  0 1px 2px rgba(74, 14, 37, 0.06);
+  --shadow-sm:  0 1px 3px rgba(74, 14, 37, 0.08), 0 1px 2px rgba(74, 14, 37, 0.04);
+  --shadow-md:  0 4px 8px -2px rgba(74, 14, 37, 0.08), 0 2px 4px -2px rgba(74, 14, 37, 0.05);
+  --shadow-lg:  0 12px 24px -6px rgba(74, 14, 37, 0.12), 0 4px 8px -4px rgba(74, 14, 37, 0.06);
+  --shadow-xl:  0 24px 48px -12px rgba(74, 14, 37, 0.18);
+  --shadow-2xl: 0 32px 64px -16px rgba(74, 14, 37, 0.26);
+  --shadow-inner: inset 0 1px 2px rgba(74, 14, 37, 0.08);
+  --shadow-brand: 0 6px 16px -4px rgba(214, 51, 108, 0.45);
+
+  /* ---------- Sizing ---------- */
+  --control-sm: 2rem;     /* 32 */
+  --control-md: 2.5rem;   /* 40 */
+  --control-lg: 3rem;     /* 48 */
+  --icon-sm: 1rem; --icon-md: 1.25rem; --icon-lg: 1.5rem;
+  --container-sm: 640px; --container-md: 768px; --container-lg: 1024px; --container-xl: 1280px; --container-2xl: 1536px;
+  /* Breakpoints (use literal values in @media; CSS vars don't work there): sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536 */
+
+  /* ---------- Z-index ---------- */
+  --z-base: 0; --z-dropdown: 1000; --z-sticky: 1100; --z-overlay: 1200; --z-modal: 1300; --z-popover: 1400; --z-toast: 1500; --z-tooltip: 1600;
+
+  /* ---------- Motion ---------- */
+  --dur-fast: 100ms; --dur-base: 160ms; --dur-slow: 240ms; --dur-slower: 400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ---------- Semantic colors (LIGHT) ---------- */
+  color-scheme: light;
+
+  --color-bg-canvas: var(--pink-50);        /* page background */
+  --color-bg-surface: var(--neutral-0);     /* cards, inputs, modals */
+  --color-bg-subtle: var(--neutral-50);     /* table header, code, zebra */
+  --color-bg-muted: var(--neutral-100);     /* disabled bg, skeleton, tracks */
+  --color-bg-hover: var(--pink-50);         /* hover on list rows/menu items */
+  --color-bg-selected: var(--pink-100);
+
+  --color-text: var(--neutral-900);
+  --color-text-secondary: var(--neutral-600);
+  --color-text-muted: var(--neutral-500);
+  --color-text-disabled: var(--neutral-400);
+  --color-text-inverse: var(--neutral-0);
+  --color-text-brand: var(--pink-700);      /* brand-colored TEXT: use 700, not 600, on tinted bg */
+  --color-link: var(--pink-700);
+  --color-link-hover: var(--pink-800);
+
+  --color-primary: var(--pink-600);
+  --color-primary-hover: var(--pink-700);
+  --color-primary-active: var(--pink-800);
+  --color-on-primary: var(--neutral-0);
+  --color-primary-subtle: var(--pink-100);
+  --color-primary-subtle-hover: var(--pink-200);
+  --color-on-primary-subtle: var(--pink-800);
+
+  --color-accent: var(--accent-500);
+  --color-accent-hover: var(--accent-400);
+  --color-on-accent: var(--neutral-900);    /* white on #FF4081 is only 3.3:1 → use dark text */
+
+  --color-border: var(--neutral-200);
+  --color-border-strong: var(--neutral-300);
+  --color-border-input: var(--neutral-450);  /* inputs, checkboxes, radios, switches */
+  --color-border-brand: var(--pink-200);
+  --color-border-focus: var(--accent-500);
+  --color-overlay: rgba(29, 24, 27, 0.55);
+
+  --color-success-bg: var(--success-50);  --color-success-border: var(--success-200); --color-success-text: var(--success-700); --color-success-solid: var(--success-600);
+  --color-warning-bg: var(--warning-50);  --color-warning-border: var(--warning-200); --color-warning-text: var(--warning-700); --color-warning-solid: var(--warning-500);
+  --color-danger-bg:  var(--danger-50);   --color-danger-border:  var(--danger-200);  --color-danger-text:  var(--danger-700);  --color-danger-solid:  var(--danger-600);
+  --color-info-bg:    var(--info-50);     --color-info-border:    var(--info-200);    --color-info-text:    var(--info-700);    --color-info-solid:    var(--info-600);
+
+  --color-on-solid: var(--neutral-0);            /* label on success/danger/info solid fills */
+  --color-danger-solid-hover: var(--danger-700);
+  --color-border-danger: var(--danger-500);
+  --color-inverse-bg: var(--neutral-900);        /* toast, tooltip */
+  --color-inverse-text: var(--neutral-50);
+  --color-thumb: var(--neutral-0);               /* switch / slider thumb, radio dot */
+  --color-selection-bg: var(--pink-200);
+  --color-selection-text: var(--neutral-900);
+  --gradient-brand: linear-gradient(135deg, var(--pink-200), var(--accent-300));
+
+  --ring-focus: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px var(--color-border-focus);
+  --ring-danger: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px var(--color-border-danger);
+}
+
+/* ---------- Dark theme: opt-in via [data-theme="dark"] or OS preference ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg-canvas: var(--neutral-950);
+  --color-bg-surface: var(--neutral-900);
+  --color-bg-subtle: var(--neutral-800);
+  --color-bg-muted: var(--neutral-700);
+  --color-bg-hover: var(--neutral-800);
+  --color-bg-selected: var(--pink-950);
+
+  --color-text: var(--neutral-50);
+  --color-text-secondary: var(--neutral-300);
+  --color-text-muted: var(--neutral-400);
+  --color-text-disabled: var(--neutral-600);
+  --color-text-inverse: var(--neutral-900);
+  --color-text-brand: var(--pink-300);
+  --color-link: var(--pink-300);
+  --color-link-hover: var(--pink-200);
+
+  --color-primary-subtle: var(--pink-950);
+  --color-primary-subtle-hover: var(--pink-900);
+  --color-on-primary-subtle: var(--pink-200);
+
+  --color-border: var(--neutral-700);
+  --color-border-strong: var(--neutral-600);
+  --color-border-input: var(--neutral-500);
+  --color-border-brand: var(--pink-800);
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-inverse-bg: var(--neutral-100);
+  --color-inverse-text: var(--neutral-900);
+
+  --color-success-bg: #0F2A17; --color-success-border: #1E6B30; --color-success-text: #8CE99A;
+  --color-warning-bg: #2E2000; --color-warning-border: #7A4300; --color-warning-text: #FFD43B;
+  --color-danger-bg:  #2E0F0F; --color-danger-border:  #A61E1E; --color-danger-text:  #FFA8A8;
+  --color-info-bg:    #0B2237; --color-info-border:    #145A9E; --color-info-text:    #74C0FC;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 24px -6px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg-canvas: var(--neutral-950);
+    --color-bg-surface: var(--neutral-900);
+    --color-bg-subtle: var(--neutral-800);
+    --color-bg-muted: var(--neutral-700);
+    --color-bg-hover: var(--neutral-800);
+    --color-bg-selected: var(--pink-950);
+    --color-text: var(--neutral-50);
+    --color-text-secondary: var(--neutral-300);
+    --color-text-muted: var(--neutral-400);
+    --color-text-disabled: var(--neutral-600);
+    --color-text-inverse: var(--neutral-900);
+    --color-text-brand: var(--pink-300);
+    --color-link: var(--pink-300);
+    --color-link-hover: var(--pink-200);
+    --color-primary-subtle: var(--pink-950);
+    --color-primary-subtle-hover: var(--pink-900);
+    --color-on-primary-subtle: var(--pink-200);
+    --color-border: var(--neutral-700);
+    --color-border-strong: var(--neutral-600);
+    --color-border-input: var(--neutral-500);
+    --color-border-brand: var(--pink-800);
+    --color-overlay: rgba(0, 0, 0, 0.7);
+    --color-inverse-bg: var(--neutral-100);
+    --color-inverse-text: var(--neutral-900);
+    --color-success-bg: #0F2A17; --color-success-border: #1E6B30; --color-success-text: #8CE99A;
+    --color-warning-bg: #2E2000; --color-warning-border: #7A4300; --color-warning-text: #FFD43B;
+    --color-danger-bg:  #2E0F0F; --color-danger-border:  #A61E1E; --color-danger-text:  #FFA8A8;
+    --color-info-bg:    #0B2237; --color-info-border:    #145A9E; --color-info-text:    #74C0FC;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 24px -6px rgba(0, 0, 0, 0.55);
+    --shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --dur-slower: 0ms; }
+}

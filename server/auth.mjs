@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const LOCKOUT_MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000;
@@ -80,6 +80,31 @@ export function verifySecret(secret, storedHash) {
 
 export function hashOpaqueToken(rawToken) {
   return createHash('sha256').update(String(rawToken)).digest('hex');
+}
+
+export const SESSION_SECRET = process.env.SESSION_SECRET || 'pc_oee_secure_hmac_secret_2026';
+
+export function signStatelessToken(payload) {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = createHmac('sha256', SESSION_SECRET).update(`${header}.${body}`).digest('base64url');
+  return `${header}.${body}.${signature}`;
+}
+
+export function verifyStatelessToken(token) {
+  if (!token || typeof token !== 'string' || !token.includes('.')) return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [header, body, signature] = parts;
+  const expectedSig = createHmac('sha256', SESSION_SECRET).update(`${header}.${body}`).digest('base64url');
+  if (signature.length !== expectedSig.length) return null;
+  if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 export function getPermissionsForUser(user) {
@@ -177,9 +202,14 @@ export function authenticateWebUser(db, { identifier, password, ipAddress = '127
     };
   }
 
-  const rawToken = randomBytes(32).toString('hex');
-  const tokenHash = hashOpaqueToken(rawToken);
   const expiresAt = new Date(now.getTime() + WEB_SESSION_TTL_MS).toISOString();
+  const rawToken = signStatelessToken({
+    userId: user.id,
+    role: user.role,
+    channel: 'WEB',
+    exp: new Date(expiresAt).getTime()
+  });
+  const tokenHash = hashOpaqueToken(rawToken);
 
   db.prepare(`
     UPDATE users
@@ -262,10 +292,17 @@ export function authenticateHmiOperator(db, { userId, nik, pin, machineId, shift
     };
   }
 
-  const rawToken = randomBytes(32).toString('hex');
-  const tokenHash = hashOpaqueToken(rawToken);
   const expiresAt = new Date(now.getTime() + HMI_SESSION_TTL_MS).toISOString();
   const targetMachineId = Number(machineId || user.primary_machine_id || 1);
+  const rawToken = signStatelessToken({
+    userId: user.id,
+    role: user.role,
+    channel: 'HMI',
+    machineId: targetMachineId,
+    shiftNumber: Number(shiftNumber) || 1,
+    exp: new Date(expiresAt).getTime()
+  });
+  const tokenHash = hashOpaqueToken(rawToken);
 
   db.prepare(`
     UPDATE users
@@ -291,6 +328,28 @@ export function authenticateHmiOperator(db, { userId, nik, pin, machineId, shift
 
 export function resolveSession(db, rawToken, now = new Date()) {
   if (!rawToken) return null;
+
+  // 1. Stateless signed token verification (cross-lambda persistent on Vercel)
+  const stateless = verifyStatelessToken(rawToken);
+  if (stateless && stateless.userId) {
+    if (stateless.exp && Number(stateless.exp) <= now.getTime()) {
+      return null;
+    }
+    const user = db.prepare(`SELECT * FROM users WHERE id = ? LIMIT 1`).get(Number(stateless.userId));
+    if (!user || !user.is_active) return null;
+
+    return {
+      sessionId: 0,
+      channel: stateless.channel || 'WEB',
+      machineId: stateless.machineId || user.primary_machine_id || 1,
+      shiftNumber: stateless.shiftNumber || 1,
+      expiresAt: new Date(stateless.exp || (now.getTime() + WEB_SESSION_TTL_MS)).toISOString(),
+      rawUser: user,
+      user: sanitizeUser(user)
+    };
+  }
+
+  // 2. Database session lookup fallback
   const tokenHash = hashOpaqueToken(rawToken);
   const row = db.prepare(`
     SELECT
